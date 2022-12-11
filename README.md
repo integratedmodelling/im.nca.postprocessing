@@ -3,4 +3,4 @@ This repository hosts a series of scripts implementing methods used for postproc
 
 ## Contents of the repository
 
-- ***aggregation.region*** contains a _Python_ script implementing a method to aggregate by region the values of rasters describing a density variable (e.g. quantity per unit area).
+- ***aggregation.region*** contains a _Python_ script implementing a method to aggregate by region the values of rasters describing a density variable (i.e. quantity per unit area).
