@@ -1,10 +1,31 @@
 """
-This script contains functions to plot maps and summary statistics of the global
-vegetation carbon stock dataset produced with ARIES and aggregated at the
-country level.
+This script contains functions specific to plot maps and summary statistics of
+the global vegetation carbon stock dataset produced with ARIES and aggregated
+at the country level with "aggregate_density_observable_by_region.py" script of
+the parent directory.
+
+For the time being the script uses the temporary data produced by the aggregation
+process. To produce the figures, the script requires specification of the
+directory containing the aggregated values of the vegetation carbon stock and
+the path to the polygon layer with the countries' borders, as well as the
+initial and final years to determine the period to effectuate the analysis.
+
+All the figures are exported in SVG format to facilitate posterior editing. The
+map figures however, are rasterized and only their title and legend left in
+vectorial form to prevent the creation of very large files (>400 Mb). To create
+vectorial maps, the option "rasterized" inside the "plot" function of geopandas
+needs to be set to False.
+
+The script has the following structure:
+
+1- Specify paths to data and temporal boundaries for the analysis.
+   THIS IS THE ONLY SECTION THE FINAL USER IS CONCERNED WITH.
+2- Declaration of functions.
+3- Data preparation.
+4- Figure production.
 
 Date: 05/12/2022
-Author: Diego Bengochea Paz
+Author: Diego Bengochea Paz.
 """
 import os
 import geopandas as gpd
@@ -20,6 +41,29 @@ import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import textwrap
 import mapclassify
+
+###############################################################################
+# Specify paths to the data and temporal boundaries for the analysis.
+###############################################################################
+
+# Directory sotring the temporary results for the vegetation carbon stock data.
+vcs_data_directory = "./tmp/vc.aggregated.country/"
+# Path to the country polygons.
+country_polygons = "./country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+# Initial and final years for the analysis.
+init_year = 2001
+last_year = 2018
+
+###############################################################################
+###############################################################################
+
+
+# WARNING: THE CODE BELOW SHOULD NOT BE MODIFIED BY THE FINAL USER !
+
+
+###############################################################################
+# Begin functions' declaration.
+###############################################################################
 
 def get_vcs_filenames(path):
     """
@@ -550,25 +594,30 @@ def plot_vcs_10_largest(gdf, year, vcs_max):
     plt.savefig("./figures/distributions/vcs_barplot_top10_"+str(year)+".svg", format = "svg")
     plt.close()
 
+###############################################################################
+# End functions' declaration.
+###############################################################################
 
+###############################################################################
+# Begin data preparation.
+###############################################################################
 
 # Preliminary data treatment.
-file_list = get_vcs_filenames("./tmp/vc.aggregated.country/")
+file_list = get_vcs_filenames(vcs_data_directory)
 vcs_df = merge_vcs_all_years(file_list)
-countries_gdf = load_countries_polygon_data("./country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp")
+countries_gdf = load_countries_polygon_data(country_polygons)
 gdf = join_vcs_with_country(vcs_df,countries_gdf)
 
 # Figure production.
 
 # Array of years of the analysis.
-years = np.arange(2001,2019,1)
+years = np.arange(init_year,last_year+1,1)
 
 # Creation of the vegetation carbon stock maps
 
 # Remove the very small vegetation carbon stocks to allow for better
 # visualization. This would not be necessary if plotting carbon stock density.
-
-vcs_threshold = 1000000.0
+vcs_threshold = np.power(10.0,6)
 gdf_reduced = gpd.GeoDataFrame(gdf)
 for year in years:
     gdf_reduced = gdf_reduced.drop( gdf_reduced[gdf_reduced[str(year)]<vcs_threshold].index )
@@ -579,9 +628,19 @@ years_str = [str(item) for item in years]
 vcs_min = gdf_reduced[years_str].min().min()/np.power(10,6)
 vcs_max = gdf_reduced[years_str].max().max()/np.power(10,6)
 
+###############################################################################
+# End data preparation.
+###############################################################################
+
+###############################################################################
+# Begin figure creation.
+###############################################################################
+
+# Plot vegetation carbon stock maps.
 for year in years:
     plot_vcs_map(gdf_reduced,year,(vcs_min,vcs_max))
 
+# Plot vegetation carbon stock changes maps.
 plot_vcs_differences_map(gdf_reduced, 2001, 2005)
 plot_vcs_differences_map(gdf_reduced, 2005, 2010)
 plot_vcs_differences_map(gdf_reduced, 2010, 2015)
@@ -590,7 +649,7 @@ plot_vcs_differences_map(gdf_reduced, 2001, 2018)
 plot_vcs_differences_map(gdf_reduced, 2001, 2010)
 plot_vcs_differences_map(gdf_reduced, 2010, 2018)
 
-# Create dynamics for winners and losers
+# Plot dynamics for winners and losers.
 
 winners, losers = get_winners_and_losers(gdf,5,2001,2018)
 
@@ -616,8 +675,7 @@ plot_vcs_dynamics(gdf,losers,"l",2010,2018)
 plot_relative_vcs_dynamics(gdf,winners,"w",2010,2018)
 plot_relative_vcs_dynamics(gdf,losers,"l",2010,2018)
 
-
-# Plot distributions
+# Plot distributions.
 for year in years:
     plot_carbon_stock_distribution(gdf,year)
     plot_carbon_stock_cummulative_distribution(gdf,year)

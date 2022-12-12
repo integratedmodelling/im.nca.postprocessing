@@ -64,7 +64,7 @@ region_polygons_file = r"\\akif.internal\public\z_resources\im-wb\2015_gaul_data
 # Name of the observable to aggregate. This will be used as a prefix for the
 # temporary results filenames. A suffix "_YYYY.csv" will be appended to this
 # name. The directory for the temporary exports is defined below.
-observable_name = "carbon_stock"
+observable_name = "vegetation-carbon-stock"
 
 # Path for the temporal exports of the aggregation process after each raster
 # processed.
