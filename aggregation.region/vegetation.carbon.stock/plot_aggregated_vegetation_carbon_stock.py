@@ -555,7 +555,7 @@ def plot_vcs_10_largest(gdf, year, vcs_max):
 
 
 # Preliminary data treatment.
-file_list = get_vcs_filenames("./temp_data/")
+file_list = get_vcs_filenames("./tmp/vcs.aggregated.country")
 vcs_df = merge_vcs_all_years(file_list)
 countries_gdf = load_countries_polygon_data("./country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp")
 gdf = join_vcs_with_country(vcs_df,countries_gdf)

@@ -1,11 +1,39 @@
 """
-This script performs the aggregation of global vegetation carbon stocks in
-Tonnes per Hectare at the country-level for the 2001-2020 period. The result is
-a CSV table storing the total vegetation carbon stock in Tonnes for each country
-in the entire world and for each year between 2001 and 2020.
+This script performs the aggregation by region of density observables (i.e.
+quantity per unit area). Given a series of raster files with maps of the density
+observables and a polygon layer specifying the regions for the aggregation, the
+script iterates over the rasters and aggregates the observable at the region
+level. The script treats each raster file as maps of the same observable for
+different years. The raster filenames are expected to have the following
+structure "vcs_YYYY_global_300m.tif" so the script can extract the year
+associated with the map.
+
+The aggregation of a density observable requires knowledge of the area of each
+raster tile. The effect of latitude on tile area is accounted for.
+
+The script produces temporary outputs for every raster file (e.g. year) in the
+form of a CSV file with two columns: one for the ID of the region and the other
+for the value of the aggregated observable in that region. The final output of
+the script is a table in CSV format containing the aggregated values for each
+region and each year.
+
+The script has the following structure:
+
+1- Specify case-dependent variables for the aggregation process.
+   THIS IS THE ONLY SECTION THE FINAL USER IS CONCERNED WITH AND THAT NEEDS TO
+   BE UPDATED AT EACH USE IN FUNCTION OF THE APPLICATION DOMAIN.
+
+    These are:
+    - directory of the raster.
+    - region polygons shapefile.
+    - name of the observable to aggregate.
+    - export directories.
+
+2- Declaration of functions.
+3- Aggregation process.
 
 Date: 01/11/2022
-Authors: Rubén Crespo, Diego Bengochea Paz
+Authors: Rubén Crespo, Diego Bengochea Paz.
 """
 
 import os
@@ -17,22 +45,61 @@ import pandas as pd
 import math
 import platform
 
-"""
-Begin of functions' declaration.
-"""
+###############################################################################
+# Specify variables for the current aggregation process.
+###############################################################################
 
-"""
-Input/Output functions.
-"""
+# The path to the directory containing the raster files with the data on the
+# density observable to aggregate. # Both Windows and Unix types of path writing
+# are supported.
+# Note that the raster filenames must have the following structure:
+# vcs_YYYY_global_300m.tif.
+# TODO: This will be changed in the future for generality.
+raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata"
+
+# Path to the shapefile containing the data on region polygons that are to be
+# used in the aggregation.
+region_polygons_file = r"\\akif.internal\public\z_resources\im-wb\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+
+# Name of the observable to aggregate. This will be used as a prefix for the
+# temporary results filenames. A suffix "_YYYY.csv" will be appended to this
+# name. The directory for the temporary exports is defined below.
+observable_name = "carbon_stock"
+
+# Path for the temporal exports of the aggregation process after each raster
+# processed.
+temp_export_dir = "./vegetation.carbon.stock/tmp/vcs.aggregated.country/"
+
+# Path to export the final dataset.
+export_path = "./vegetation.carbon.stock/vcs-aggregated-country.csv"
+
+###############################################################################
+###############################################################################
+
+
+# WARNING: THE CODE BELOW SHOULD NOT BE MODIFIED BY THE FINAL USER !
+
+
+###############################################################################
+# Begin of functions' declaration.
+###############################################################################
+
+###############################################################################
+# Input/Output functions.
+###############################################################################
+
 
 def get_raster_data(path):
     """
-    get_raster_data gets the addresses of all the raster files ("*.tif") contained in the directory specified by the path. Each raster file
-                         corresponds to a different year.
+    get_raster_data gets the addresses of all the raster files ("*.tif")
+    stored in the directory specified by "path". Each raster file should
+    correspond to a different year for the analysis.
 
-    :param path: directory containing the raster data for the global vegetation carbon stocks at 300m resolution for each year.
-    :return: a list storing the addresses of all the raster files containing the data to be aggregated by country.
+    :param path: directory containing the raster files for the density observable
+    to aggregate.
+    :return: a list storing the addresses of all the raster files.
     """
+
     file_list = []
     for file in os.listdir(path):
         # Iterate over all the files in the specified directory.
@@ -49,15 +116,17 @@ def get_raster_data(path):
                 file_list.append(address)
         else:
             pass
-    # print(file_list)
+
     return file_list
 
-def load_country_polygons(file):
-    """
-    load_country_polygons loads a shapefile containing vector data of country borders for the entire world as a GeoDataFrame.
 
-    :param file: the address of the shapefile with the country border data.
-    :return: a GeoDataFrame with the data on the countries' polygons.
+def load_region_polygons(file):
+    """
+    load_region_polygons loads a shapefile containing a polygon layer describing
+    the regions to perform the aggregation.
+
+    :param file: the address of the shapefile with the region polygons.
+    :return: a GeoDataFrame with the data on the regions' polygons.
     """
     if platform.system() is "Windows":
         file = file.replace("/","\\")
@@ -68,41 +137,54 @@ def load_country_polygons(file):
     gdf = gpd.read_file(file)
     return gdf
 
-def export_to_csv(country_polygons, aggregated_carbon_stocks):
-    """
-    export_to_csv creates a DataFrame where aggregated vegetation carbon stocks are associated with each country and exports this data in CSV format.
 
-    :param country_polygons: a GeoDataFrame storing the polygons corresponding to each country for the entire world.
-    :param aggregated_carbon_stocks: a DataFrame storing the aggregated carbon stock values to be associated with each country.
-    :return: None. The function creates a "total_carbon_test.csv" file in the current working directory that contains the total vegetation carbon stock for each country.
+def export_to_csv(region_polygons, aggregated_observable, path):
+    """
+    export_to_csv joins the result of the aggregation process for each year with
+    the regions and exports the final dataset in CSV format to the specified
+    path.
+
+    :param region_polygons: a GeoDataFrame storing the polygons corresponding to
+    each region used to aggregate.
+    :param aggregated_observable: a DataFrame storing the aggregated values of
+    the observable.
+    :param path: path for the export.
+    :return: None. The function creates a file in the specified path with the
+    final results of the aggregation.
     """
 
-    # Create a DataFrame based on the country border GeoDataFrame and dropping unnecessary information to keep only: the polygons' Id, country codes, and administrative names.
-    df_final = pd.DataFrame(country_polygons.drop(columns='geometry'))
+    # Create a DataFrame based on the regions GeoDataFrame and dropping
+    # unnecessary information in order to keep only: the polygons' Id, region
+    # codes, and administrative names.
+    df_final = pd.DataFrame(region_polygons.drop(columns='geometry'))
     df_final = df_final.drop(["STATUS", "DISP_AREA", "ADM0_CODE", "STR0_YEAR", "EXP0_YEAR", "Shape_Leng", "ISO3166_1_", "ISO3166__1", "Shape_Le_1", "Shape_Area"], axis = 1)
 
-    # Join the depurated country DataFrame with the aggregated vegetation carbon stocks to associate each country with its total stock.
-    df_final = df_final.join(aggregated_carbon_stocks)
+    # Join the depurated regions DataFrame with the aggregated values.
+    df_final = df_final.join(aggregated_observable)
 
-    # Export the result to the current working directory.
-    df_final.to_csv("total_carbon.csv")
+    # Export the result to the specified path.
+    df_final.to_csv(path)
 
-"""
-Processing function.
-"""
+
+###############################################################################
+# Processing function.
+###############################################################################
+
 
 def area_of_pixel(pixel_size, center_lat):
     """
-    area_of_pixel calculates the area, in hectares, of a wgs84 square raster tile.
-                  This function is adapted from https://gis.stackexchange.com/a/288034.
+    area_of_pixel calculates the area, in hectares, of a wgs84 square raster
+    tile given its latitude and side-length.
+    This function is adapted from https://gis.stackexchange.com/a/288034.
 
     :param pixel_size: is the length of the pixel side in degrees.
-    :param center_lat: is the latitude of the center of the pixel. This
-            value +/- half the `pixel-size` must not exceed 90/-90 degrees
-            latitude or an invalid area will be calculated.
-
-    :return: the area of a square pixel of side length `pixel_size` whose center is at latitude `center_lat` in hectares.
+    :param center_lat: is the latitude of the center of the pixel. This value
+    +/- half the `pixel-size` must not exceed 90/-90 degrees latitude or an
+    invalid area will be calculated.
+    :return: the rel area in hectares of a square pixel of side length
+    `pixel_size` whose center is at latitude `center_lat`.
     """
+
     a = 6378137  # meters
     b = 6356752.3142  # meters
     e = math.sqrt(1 - (b/a)**2)
@@ -116,88 +198,100 @@ def area_of_pixel(pixel_size, center_lat):
                 math.sin(math.radians(f)) / (zp*zm)))
     return (pixel_size / 360. * (area_list[0] - area_list[1])) * np.power(10.0,-4)
 
-def carbon_stock_raster_tiling(out_image, out_transform, pixel_size, width, height):
-    """
-    raster_tiling is called when the output of the masking raster exceeds the 3Gb storage. To not get memory issues, we split the masked raster in tiles of 1000x1000, and calculate the total carbon stock, accumulating the value of the total carbon for every tile.
 
-    :param out_image: is the masked raster layer, in the context of this script the vegetation carbon stock raster.
-    :param out_transform: the Affine containing the transformation matrix with latitude and longitude values, resolution...
+def split_and_aggregate(out_image, out_transform, pixel_size, width, height):
+    """
+    split_and_aggregate splits a raster in tiles of 1000x1000 pixels, performs
+    the aggregation in each tile and accumulate the results to obtain the total
+    value for all the region. The function is called when the raster mask
+    corresponding to the region is too large in size (>3Gb).
+
+    :param out_image: is the masked raster layer.
+    :param out_transform: the Affine containing the transformation matrix with
+    latitude and longitude values, resolution, etc.
     :param pixel_size: is the side length in degrees of each square raster tile.
     :param width: is the width of the masked layer.
     :param height: is the height of the masked layer.
-
-    :return: the value of the total carbon stock for the country
+    :return: the value of the aggregated observable at the region-level.
     """
 
     tilesize = 1000
-    total_acumulated_carbon_stock = 0
+    # The variable to accumulate the aggregated value of the observable.
+    accumulated_agg_value = 0
 
-    for i in range(0, width, tilesize): #tilesize marks from where to where in width
+    for i in range(0, width, tilesize): # Tilesize marks from where to where in width.
         for j in range(0, height, tilesize):
-            #this is for the edge parts, so we don't get nodata from the borders
-            w0 = i #start of the array
-            w_plus = min(i+tilesize, width) - i #addition value
-            w1 = w0 + w_plus #end of the array
-            h0 = j #start of the array
-            h_plus = min(j+tilesize, height) - j #addition value
-            h1 = h0 + h_plus #end of the array
+            # This is for the edge parts, so we don't get nodata from the borders.
+            w0 = i # Start of the array.
+            w_plus = min(i+tilesize, width) - i # Addition value.
+            w1 = w0 + w_plus # End of the array.
+            h0 = j
+            h_plus = min(j+tilesize, height) - j
+            h1 = h0 + h_plus
 
-            total_carbon_stock = get_total_carbon_stock(out_image, out_transform, pixel_size, w0, h0, w1, h1)
+            tile_agg_value = aggregate_one_region(out_image, out_transform, pixel_size, w0, h0, w1, h1)
 
-            total_acumulated_carbon_stock += total_carbon_stock
+            acumulated_agg_value += tile_agg_value
 
-    return total_acumulated_carbon_stock
+    return accumulated_agg_value
 
-def get_total_carbon_stock(out_image, out_transform, pixel_size, width_0, height_0, width_1, height_1):
+def aggregate_one_region(out_image, out_transform, pixel_size, width_0, height_0, width_1, height_1):
     """
-    get_total_carbon_stock creates a raster layer based on a reference layer (out_image), where the value of each tile corresponds to its true area in hectares.
+    aggregate_one_region performs the aggregation of the density observable in a
+    given region supplied in the form of a masked raster of the observable.
 
-    :param out_image: is the baseline raster layer, in the context of this script the vegetation carbon stock raster.
-    :param out_transform: the Affine containing the transformation matrix with latitude and longitude values, resolution...
-    :param pixel_size: is the side length in degrees of each square raster tile.
-    :param width_0: is the starting value position of the width array
-    :param height_0: is the starting value position of the height array
-    :param width_1: is the end value position of the width array
-    :param height_1: is the end value position of the height array
-
-    :return: the total carbon stock extracted from the raster.
+    :param out_image: the masked raster layer to aggregate.
+    :param out_transform: the Affine of the raster layer.
+    :param pixel_size: the side length in degrees of each square raster tile.
+    :param width_0: the starting value position of the width array
+    :param height_0: the starting value position of the height array
+    :param width_1: the end value position of the width array
+    :param height_1: the end value position of the height array
+    :return: the aggregated value of the observable in the specified region.
     """
 
     # Create a matrix of coordinates based on tile number.
     cols, rows = np.meshgrid(np.arange(width_0, width_1), np.arange(height_0, height_1))
 
-    # Transform the tile number coordinates to real coordinates and extract only latitude information.
+    # Transform the tile number coordinates to real coordinates and extract only
+    # latitude information.
     ys = rasterio.transform.xy(out_transform, rows, cols)[1] # [0] is xs
     latitudes = np.array(ys) # Cast the list of arrays to a 2D array for computational convenience.
 
-    # Iterate over the latitudes matrix, calculate the area of each tile, and store it in the real_raster_areas array.
+    # Iterate over the latitudes matrix, calculate the area of each tile, and
+    # store it in the real_raster_areas array.
     real_raster_areas = np.empty(np.shape(latitudes))
     for i, latitude_array in enumerate(latitudes):
         for j, latitude in enumerate(latitude_array):
             real_raster_areas[i,j] = area_of_pixel(pixel_size, latitude)
 
-    # Calculate the total carbon stock in each tile: tonnes/hectare * hectares = tonnes.
-    total_carbon_stock_array = real_raster_areas * out_image[0,height_0:height_1,width_0:width_1] #I don't think np.transpose() is necesary
+    # Calculate the total value in each tile: density * area = observable value
+    # in the area.
+    value = real_raster_areas * out_image[0,height_0:height_1,width_0:width_1] #I don't think np.transpose() is necesary
 
     # Sum all the carbon stock values in the country treating NaNs as 0.0.
-    total_carbon_stock = np.nansum(total_carbon_stock_array)
+    aggregated_value = np.nansum(value)
 
-    return total_carbon_stock
+    return aggregated_value
 
-def carbon_stock_aggregation(raster_files_list, country_polygons):
+def aggregate_density_observable(raster_files_list, region_polygons, temp_export_path):
     """
-    carbon_stock_aggregation aggregates vegetation carbon stock data in Tonnes per Hectare and with a resolution of 300m at the country level.
-                             The result of the aggregation is the total vegetation carbon stock in Tonnes for each country. Naturally, the
-                             dependence of raster tile area on the latitude is taken into account. The function iterates over the carbon stock
-                             rasters corresponding to different years.
+    aggregate_density_observable aggregates the density observable for all the
+    raster files specified and inside the specified regions. The result of the
+    aggregation is returned as a table and the result for each year/raster is
+    progressively exported in CSV format.
 
-    :param raster_files_list: a list containing the addresses of all the raster files that store the vegetation carbon stock data for each year.
-    :param country_polygons: a GeoDataFrame storing the polygons corresponding to each country for the entire world.
-    :return: a DataFrame storing the aggregated vegetation carbon stocks at the country level for each year.
+    :param raster_files_list: a list containing the addresses of all the raster
+    files that store the observable's data for each year.
+    :param region_polygons: a GeoDataFrame storing the polygons corresponding to
+    each region used for the aggregation.
+    :param temp_export_path: path to export the temporary results.
+    :return: a DataFrame storing the aggregated vegetation carbon stocks at the
+    region level for each year.
     """
 
     # Final DataFrame will store the aggregated carbon stocks for each country and each year.
-    aggregated_carbon_stock_df = pd.DataFrame([])
+    aggregated_df = pd.DataFrame([])
 
     for file in raster_files_list[:]: # [10:]
         # Iterate over all the raster files' addresses and extract the year from the address.
@@ -206,16 +300,17 @@ def carbon_stock_aggregation(raster_files_list, country_polygons):
         year_string_start = file.find("vcs_",start)
         file_year = str( file[ year_string_start + 4 : year_string_start + 8] )
 
-        print("We are working with the file {} from the year {}".format(file, file_year))
+        print("Processing file {} corresponding to year {}.".format(file, file_year))
 
-        aggregated_carbon_stock_list = [] # This list will store the results from the aggregation.
+        # This list will store the results from the aggregation.
+        aggregated_value_list = []
 
         with rasterio.open(file) as raster_file: # Load the raster file.
 
             gt = raster_file.transform # Get all the raster properties on a list.
             pixel_size = gt[0] # X size is stored in position 0, Y size is stored in position 4.
 
-            for row_index, row in country_polygons.iterrows(): # gdf.loc[0:1].iterrows():
+            for row_index, row in region_polygons.iterrows(): # gdf.loc[0:1].iterrows():
                 # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 
                 geo_row = gpd.GeoSeries(row['geometry']) # This is the country's polygon geometry.
@@ -229,63 +324,53 @@ def carbon_stock_aggregation(raster_files_list, country_polygons):
                 height = out_image.shape[1]
                 width  = out_image.shape[2]
 
-                #check the size of the raster image
+                # Split the masked raster if it is too large to avoid memory
+                # errors. Else process the entire region.
                 if out_image.nbytes > (3* 10**9):
-                    print("the country {} exceeds 3Gb of memory, we will split the array in tiles of 1000. Current size is GB: {} ".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
-
-                    total_carbon_stock = carbon_stock_raster_tiling(out_image, out_transform, pixel_size, width, height)
+                    print("Country {} exceeds 3Gb of memory, splitting the array in tiles of 1000x1000. Current size is GB: {} .".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
+                    aggregated_value = split_and_aggregate(out_image, out_transform, pixel_size, width, height)
 
                 else:
-                    # Create a global raster where each pixel's value corresponds to its true area in hectares.
-                    total_carbon_stock = get_total_carbon_stock(out_image, out_transform, pixel_size, 0, 0, width, height)
+                    aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
 
                 # Add the aggregated stock to the list.
-                aggregated_carbon_stock_list.append(total_carbon_stock)
+                aggregated_value_list.append(aggregated_value)
 
-                print("the country {} is finished".format(row["ADM0_NAME"]))
+                print("Country {} finished.".format(row["ADM0_NAME"]))
 
-        print("Finished calculating {} year raster".format(file_year))
+        print("Finished calculating year {}.".format(file_year))
 
         # Transform the list to a DataFrame using the year as header.
-        aggregated_carbon_stock = pd.DataFrame(aggregated_carbon_stock_list, columns = [file_year])
+        aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year])
 
-        # Merge this year's carbon stocks to the final, multi-year DataFrame.
-        aggregated_carbon_stock_df = pd.merge(aggregated_carbon_stock_df, aggregated_carbon_stock, how='outer', left_index = True, right_index=True)
+        # Merge this year's results with the final, multi-year DataFrame.
+        aggregated_df = pd.merge(aggregated_df, aggregated_observable, how='outer', left_index = True, right_index=True)
 
-        #export the carbon stock year as a backup
-        aggregated_carbon_stock.to_csv("carbon_stock_{}.csv".format(file_year))
+        # Export the temporary results from curent year.
+        aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + ".csv")
 
-    return aggregated_carbon_stock_df
+    return aggregated_df
 
-"""
-End of functions' declaration.
-"""
+###############################################################################
+# End of functions' declaration.
+###############################################################################
 
-"""
-Aggregation of vegetation carbon stock at the country level.
-"""
-
-"""
-The directory containing the raster files for the global carbon stock data at 300m resolution. This is the data to be aggregated by country.
-Note that the raster filenames must have the following structure: vcs_YYYY_global_300m.tif.
-"""
-
-vcs_rasters_directory = r"\\akif.internal\public\veg_c_storage_rawdata" # Both Windows and Unix types of path writing are supported.
-
-"""
-Full address of the shapefile containing the data on country borders for the entire world. This determines the country's polygons
-inside which the aggregation of carbon stocks is done.
-"""
-
-country_polygons_file = r"\\akif.internal\public\z_resources\im-wb\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+###############################################################################
+# Begin the aggregation process.
+###############################################################################
 
 print("Loading data.")
-vcs_rasters_list = get_raster_data(vcs_rasters_directory)
-country_polygons = load_country_polygons(country_polygons_file)
-print("Data was loaded succesfully.")
+raster_list = get_raster_data(raster_directory)
+region_polygons = load_region_polygons(region_polygons_file)
+print("Data loaded succesfully.")
+
+# Full path for temporary exports.
+temp_export_path = temp_export_dir + observable_name
 
 print("Starting aggregation process.")
-vcs_aggregated   = carbon_stock_aggregation(vcs_rasters_list, country_polygons)
-print("Aggregation of vegetation carbon stocks at the country level finished.")
-export_to_csv(country_polygons, vcs_aggregated)
-print("Total vegetation carbon stocks at the country level succesfully exported.")
+aggregated_observable = aggregate_density_observable(raster_list, region_polygons, temp_export_path)
+print("Aggregation finished.")
+
+print("Exporting the aggregated dataset.")
+export_to_csv(region_polygons, aggregated_observable, export_path)
+print("Done.")
