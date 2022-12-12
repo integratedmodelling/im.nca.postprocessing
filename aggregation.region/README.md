@@ -2,7 +2,7 @@
 
 ***aggregate_density_observable_by_region.py*** processes maps of density observables produced with ARIES in order to obtain region-level data. The _Python_ script has a twin _notebook_ that serves as interactive documentation.   
 
-Data obtained by the application of the aggregation method to specific domains is stored in different directories within this one. Further details on the deomains of application can be found below.
+Data obtained by the application of the aggregation method to specific domains is stored in different directories within this one. Further details regarding the aggregation process and the domains of application can be found below.
 
 ## Outline of the aggregation process
 
