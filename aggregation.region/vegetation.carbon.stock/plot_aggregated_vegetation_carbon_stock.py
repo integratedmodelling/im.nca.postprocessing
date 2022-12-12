@@ -6,7 +6,6 @@ country level.
 Date: 05/12/2022
 Author: Diego Bengochea Paz
 """
-
 import os
 import geopandas as gpd
 import rasterio
@@ -238,10 +237,10 @@ def plot_vcs_dynamics(gdf, countries, type, init_year, last_year):
     # plt.tight_layout()
     if type == "w":
         g.fig.suptitle("Vegetation carbon stock dynamics for the top 5 winners \n"+str(init_year) + "-"+ str(last_year))
-        plt.savefig("./figures/dynamics/vcs_dynamics_winners_"+ str(init_year) + "_"+ str(last_year) +".png", dpi=300)
+        plt.savefig("./figures/dynamics/vcs_dynamics_winners_"+ str(init_year) + "_"+ str(last_year) +".svg", format = "svg")
     if type == "l":
         g.fig.suptitle("Vegetation carbon stock dynamics for the top 5 losers \n"+str(init_year) + "-"+ str(last_year))
-        plt.savefig("./figures/dynamics/vcs_dynamics_losers_"+ str(init_year) + "_"+ str(last_year) +".png", dpi=300)
+        plt.savefig("./figures/dynamics/vcs_dynamics_losers_"+ str(init_year) + "_"+ str(last_year) +".svg", format = "svg")
     # plt.show()
     plt.close()
 
@@ -300,10 +299,10 @@ def plot_relative_vcs_dynamics(gdf, countries, type, init_year, last_year):
     # plt.tight_layout()
     if type == "w":
         g.fig.suptitle("Vegetation carbon stock dynamics for the top 5 winners \n"+str(init_year) + "-"+ str(last_year))
-        plt.savefig("./figures/dynamics/relative_vcs_dynamics_winners_"+ str(init_year) + "_"+ str(last_year) +".png", dpi=300)
+        plt.savefig("./figures/dynamics/relative_vcs_dynamics_winners_"+ str(init_year) + "_"+ str(last_year) +".svg", format = "svg")
     if type == "l":
         g.fig.suptitle("Vegetation carbon stock dynamics for the top 5 losers \n"+str(init_year) + "-"+ str(last_year))
-        plt.savefig("./figures/dynamics/relative_vcs_dynamics_losers_"+ str(init_year) + "_"+ str(last_year) +".png", dpi=300)
+        plt.savefig("./figures/dynamics/relative_vcs_dynamics_losers_"+ str(init_year) + "_"+ str(last_year) +".svg", format = "svg")
     # plt.show()
     plt.close()
 
@@ -333,14 +332,15 @@ def plot_vcs_map(gdf, year, vcs_range):
              # legend_kwds={'label':"Vegetation carbon stock (tonnes)"},
              cmap = 'summer_r',
              norm=colors.LogNorm(vmin=vcs_range[0], vmax=vcs_range[1]),
-             cax=cax
+             cax=cax,
+             rasterized=True
     )
     # sfont = {'fontname':'sans-serif'}
     ax.set_title("Vegetation carbon stock (Mt)\n" + str(year))#,**sfont)
     ax.set_axis_off()
     plt.tight_layout(w_pad=0.0, h_pad=0.0)
     # plt.subplots_adjust(top=0.99,left=0.01,bottom=0.01)
-    plt.savefig("./figures/maps/vcs_"+str(year)+".png", dpi=300)
+    plt.savefig("./figures/maps/vcs_"+str(year)+".svg", format = "svg",dpi=300)
     # plt.show()
     plt.close()
 
@@ -373,13 +373,14 @@ def plot_vcs_differences_map(gdf, init_year, last_year):
               cmap = palette, #sns.color_palette("coolwarm", as_cmap=True),#sns.color_palette("Spectral", as_cmap=True), #'RdBu',
               # norm = colors.TwoSlopeNorm(vmin=diff[col].min(), vcenter=0., vmax=diff[col].max()),
               # cax=cax,
-              scheme="quantiles"
+              scheme="quantiles",
+              rasterized=True
     )
     # sfont = {'fontname':'sans-serif'}
     ax.set_title("Relative change of vegetation carbon stock (%) \n" + str(init_year)+"-"+str(last_year))#,**sfont)
     ax.set_axis_off()
     plt.tight_layout(w_pad=0.0, h_pad=0.0)
-    plt.savefig("./figures/maps/vcs_change_"+ str(init_year)+"_"+str(last_year)+".png", dpi=300)
+    plt.savefig("./figures/maps/vcs_change_"+ str(init_year)+"_"+str(last_year)+".svg", format = "svg",dpi=300)
     # plt.show()
     plt.close()
 
@@ -419,7 +420,7 @@ def plot_carbon_stock_cummulative_distribution(gdf,year):
     g.axes[0,0].set_ylim(np.power(10.0,-9),50)
     g.fig.suptitle("Cummulative distribution of vegetation carbon stock\n" + str(year))
     plt.subplots_adjust(top=0.9,left=0.15)
-    plt.savefig("./figures/distributions/vcs_cdf_"+str(year)+".png", dpi=300)
+    plt.savefig("./figures/distributions/vcs_cdf_"+str(year)+".svg", format = "svg")
     # plt.show()
     plt.close()
 
@@ -463,7 +464,7 @@ def plot_carbon_stock_distribution(gdf,year):
     g.axes[0,0].set_xlim(2.5*np.power(10.0,1),3*np.power(10.0,11))
     g.fig.suptitle("Distribution of vegetation carbon stock in tonnes\n" + str(year))
     plt.subplots_adjust(top=0.9,left=0.15)
-    plt.savefig("./figures/distributions/vcs_df_"+str(year)+".png", dpi=300)
+    plt.savefig("./figures/distributions/vcs_df_"+str(year)+".svg", format = "svg")
     # plt.show()
     plt.close()
 
@@ -510,10 +511,7 @@ def plot_difference_vs_initial(gdf, init_year, last_year):
     g.ax_marg_x.set_xscale('log')
     g.fig.suptitle("Initial carbon stock vs. relative changes \n" + str(init_year)+"-"+str(last_year))
     plt.subplots_adjust(top=0.9,left=0.15)
-    plt.savefig("./figures/distributions/vcs_init_vs_changes_"+str(init_year)+"_"+str(last_year)+".png", dpi=300)
-    # g.axes[0,0].set_ylabel("Relative change in vegetation carbon between "+str(init_year)+" and "+str(last_year))
-    # g.axes[0,0].set_xscale("log")
-    # plt.show()
+    plt.savefig("./figures/distributions/vcs_init_vs_changes_"+str(init_year)+"_"+str(last_year)+".svg", format = "svg")
     plt.close()
 
 def plot_vcs_10_largest(gdf, year, vcs_max):
@@ -549,13 +547,13 @@ def plot_vcs_10_largest(gdf, year, vcs_max):
     g.fig.suptitle("Distribution of the vegetation carbon stock among the top 10 countries")
     plt.subplots_adjust(top=0.94, bottom=0.08, left=0.12)
     # plt.show()
-    plt.savefig("./figures/distributions/vcs_barplot_top10_"+str(year)+".png", dpi=300)
+    plt.savefig("./figures/distributions/vcs_barplot_top10_"+str(year)+".svg", format = "svg")
     plt.close()
 
 
 
 # Preliminary data treatment.
-file_list = get_vcs_filenames("./tmp/vcs.aggregated.country")
+file_list = get_vcs_filenames("./tmp/vc.aggregated.country/")
 vcs_df = merge_vcs_all_years(file_list)
 countries_gdf = load_countries_polygon_data("./country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp")
 gdf = join_vcs_with_country(vcs_df,countries_gdf)
@@ -580,9 +578,7 @@ for year in years:
 years_str = [str(item) for item in years]
 vcs_min = gdf_reduced[years_str].min().min()/np.power(10,6)
 vcs_max = gdf_reduced[years_str].max().max()/np.power(10,6)
-# print(vcs_min)
-# print(vcs_max)
-#
+
 for year in years:
     plot_vcs_map(gdf_reduced,year,(vcs_min,vcs_max))
 
@@ -626,11 +622,11 @@ for year in years:
     plot_carbon_stock_distribution(gdf,year)
     plot_carbon_stock_cummulative_distribution(gdf,year)
 
-# Plot change vs. initial vegetation carbon stock.
+#Plot change vs. initial vegetation carbon stock.
 plot_difference_vs_initial(gdf, 2001, 2018)
 plot_difference_vs_initial(gdf, 2001, 2010)
 plot_difference_vs_initial(gdf, 2010, 2018)
 
-# Plot top 10 biggest stocks.
+#Plot top 10 biggest stocks.
 for year in years:
  plot_vcs_10_largest(gdf, year, vcs_max)
