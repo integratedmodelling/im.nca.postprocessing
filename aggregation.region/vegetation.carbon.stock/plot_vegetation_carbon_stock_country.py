@@ -29,8 +29,6 @@ Author: Diego Bengochea Paz.
 """
 import os
 import geopandas as gpd
-import rasterio
-import rasterio.mask
 import numpy as np
 import pandas as pd
 import math
@@ -47,12 +45,14 @@ import mapclassify
 ###############################################################################
 
 # Directory sotring the temporary results for the vegetation carbon stock data.
-vcs_data_directory = "./tmp/vc.aggregated.country/"
+vcs_data_directory = r".\tmp\vcs.aggregated.country"
+# "C:\Users\admin\Documents\01_Ruben_Scripts\im.nca.postprocessing\aggregation.region\vegetation.carbon.stock\tmp\vcs.aggregated.country"
 # Path to the country polygons.
-country_polygons = "./country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+country_polygons = r".\country_polygons\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+# "C:\Users\admin\Documents\01_Ruben_Scripts\im.nca.postprocessing\aggregation.region\vegetation.carbon.stock\country_polygons\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 # Initial and final years for the analysis.
 init_year = 2001
-last_year = 2018
+last_year = 2020
 
 ###############################################################################
 ###############################################################################
@@ -647,33 +647,33 @@ plot_vcs_differences_map(gdf_reduced, 2010, 2015)
 plot_vcs_differences_map(gdf_reduced, 2015, 2018)
 plot_vcs_differences_map(gdf_reduced, 2001, 2018)
 plot_vcs_differences_map(gdf_reduced, 2001, 2010)
-plot_vcs_differences_map(gdf_reduced, 2010, 2018)
+plot_vcs_differences_map(gdf_reduced, 2010, 2020)
 
 # Plot dynamics for winners and losers.
 
-winners, losers = get_winners_and_losers(gdf,5,2001,2018)
+winners, losers = get_winners_and_losers(gdf,5,2001,2020)
 
-plot_vcs_dynamics(gdf,winners,"w", 2001, 2018)
-plot_vcs_dynamics(gdf,losers,"l", 2001, 2018)
+plot_vcs_dynamics(gdf,winners,"w", 2001, 2020)
+plot_vcs_dynamics(gdf,losers,"l", 2001, 2020)
 
-plot_relative_vcs_dynamics(gdf,winners,"w",2001,2018)
-plot_relative_vcs_dynamics(gdf,losers,"l",2001,2018)
+plot_relative_vcs_dynamics(gdf,winners,"w",2001,2020)
+plot_relative_vcs_dynamics(gdf,losers,"l",2001,2020)
 
 winners, losers = get_winners_and_losers(gdf,5,2001,2010)
 
-plot_vcs_dynamics(gdf,winners,"w",2001,2010)
-plot_vcs_dynamics(gdf,losers,"l",2001,2010)
+plot_vcs_dynamics(gdf,winners,"w",2001,2020)
+plot_vcs_dynamics(gdf,losers,"l",2001,2020)
 
-plot_relative_vcs_dynamics(gdf,winners,"w",2001,2010)
-plot_relative_vcs_dynamics(gdf,losers,"l",2001,2010)
+plot_relative_vcs_dynamics(gdf,winners,"w",2001,2020)
+plot_relative_vcs_dynamics(gdf,losers,"l",2001,2020)
 
-winners, losers = get_winners_and_losers(gdf,5,2010,2018)
+winners, losers = get_winners_and_losers(gdf,5,2010,2020)
 
-plot_vcs_dynamics(gdf,winners,"w",2010,2018)
-plot_vcs_dynamics(gdf,losers,"l",2010,2018)
+plot_vcs_dynamics(gdf,winners,"w",2010,2020)
+plot_vcs_dynamics(gdf,losers,"l",2010,2020)
 
-plot_relative_vcs_dynamics(gdf,winners,"w",2010,2018)
-plot_relative_vcs_dynamics(gdf,losers,"l",2010,2018)
+plot_relative_vcs_dynamics(gdf,winners,"w",2010,2020)
+plot_relative_vcs_dynamics(gdf,losers,"l",2010,2020)
 
 # Plot distributions.
 for year in years:
@@ -681,9 +681,9 @@ for year in years:
     plot_carbon_stock_cummulative_distribution(gdf,year)
 
 #Plot change vs. initial vegetation carbon stock.
-plot_difference_vs_initial(gdf, 2001, 2018)
+plot_difference_vs_initial(gdf, 2001, 2020)
 plot_difference_vs_initial(gdf, 2001, 2010)
-plot_difference_vs_initial(gdf, 2010, 2018)
+plot_difference_vs_initial(gdf, 2010, 2020)
 
 #Plot top 10 biggest stocks.
 for year in years:
