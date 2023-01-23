@@ -45,11 +45,11 @@ import mapclassify
 ###############################################################################
 
 # Directory sotring the temporary results for the vegetation carbon stock data.
-# vcs_data_directory = r".\tmp\vcs.aggregated.country"
-vcs_data_directory = r"C:\Users\admin\Documents\01_Ruben_Scripts\im.nca.postprocessing\aggregation.region\vegetation.carbon.stock\tmp\vcs.aggregated.country"
+vcs_data_directory = "./tmp/vcs.aggregated.country"
+# "C:\Users\admin\Documents\01_Ruben_Scripts\im.nca.postprocessing\aggregation.region\vegetation.carbon.stock\tmp\vcs.aggregated.country"
 # Path to the country polygons.
-# country_polygons = r".\country_polygons\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
-country_polygons = r"C:\Users\admin\Downloads\country_polygons\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+country_polygons = "/home/dibepa/git/countrycarbonaggregation/country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+# "C:\Users\admin\Documents\01_Ruben_Scripts\im.nca.postprocessing\aggregation.region\vegetation.carbon.stock\country_polygons\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 # Initial and final years for the analysis.
 init_year = 2001
 last_year = 2020
@@ -644,8 +644,8 @@ for year in years:
 plot_vcs_differences_map(gdf_reduced, 2001, 2005)
 plot_vcs_differences_map(gdf_reduced, 2005, 2010)
 plot_vcs_differences_map(gdf_reduced, 2010, 2015)
-plot_vcs_differences_map(gdf_reduced, 2015, 2018)
-plot_vcs_differences_map(gdf_reduced, 2001, 2018)
+plot_vcs_differences_map(gdf_reduced, 2015, 2020)
+plot_vcs_differences_map(gdf_reduced, 2001, 2020)
 plot_vcs_differences_map(gdf_reduced, 2001, 2010)
 plot_vcs_differences_map(gdf_reduced, 2010, 2020)
 
@@ -661,11 +661,11 @@ plot_relative_vcs_dynamics(gdf,losers,"l",2001,2020)
 
 winners, losers = get_winners_and_losers(gdf,5,2001,2010)
 
-plot_vcs_dynamics(gdf,winners,"w",2001,2020)
-plot_vcs_dynamics(gdf,losers,"l",2001,2020)
+plot_vcs_dynamics(gdf,winners,"w",2001,2010)
+plot_vcs_dynamics(gdf,losers,"l",2001,2010)
 
-plot_relative_vcs_dynamics(gdf,winners,"w",2001,2020)
-plot_relative_vcs_dynamics(gdf,losers,"l",2001,2020)
+plot_relative_vcs_dynamics(gdf,winners,"w",2001,2010)
+plot_relative_vcs_dynamics(gdf,losers,"l",2001,2010)
 
 winners, losers = get_winners_and_losers(gdf,5,2010,2020)
 
