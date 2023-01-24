@@ -44,6 +44,7 @@ import numpy as np
 import pandas as pd
 import math
 import platform
+from aggregate_density_observable_by_region import *
 
 ###############################################################################
 # Specify variables for the current aggregation process.
@@ -121,7 +122,7 @@ def get_raster_data(path):
         else:
             pass
 
-    return file_list
+    return file_list.sort()
 
 def load_region_polygons(file):
     """
@@ -293,7 +294,7 @@ def aggregate_density_observable(landcover_files_list, raster_files_list, region
     region level for each year.
     """
 
-    get_raster_data()
+    landcover_list = get_raster_data(landcover_directory)
 
     # Final DataFrame will store the aggregated carbon stocks for each country and each year.
     aggregated_df = pd.DataFrame([])
@@ -375,7 +376,6 @@ def aggregate_density_observable(landcover_files_list, raster_files_list, region
 
 print("Loading data.")
 raster_list = get_raster_data(raster_directory)
-landcover_list = get_raster_data(landcover_directory)
 region_polygons = load_region_polygons(region_polygons_file)
 print("Data loaded succesfully.")
 
@@ -383,7 +383,7 @@ print("Data loaded succesfully.")
 temp_export_path = temp_export_dir + observable_name
 
 print("Starting aggregation process.")
-aggregated_observable = aggregate_density_observable(landcover_list, raster_list, region_polygons, temp_export_path)
+aggregated_observable = aggregate_density_observable(raster_list, region_polygons, temp_export_path)
 print("Aggregation finished.")
 
 print("Exporting the aggregated dataset.")
