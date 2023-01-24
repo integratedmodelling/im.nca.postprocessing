@@ -231,7 +231,7 @@ def split_and_aggregate(out_image, out_transform, pixel_size, width, height):
 
             tile_agg_value = aggregate_one_region(out_image, out_transform, pixel_size, w0, h0, w1, h1)
 
-            acumulated_agg_value += tile_agg_value
+            accumulated_agg_value += tile_agg_value
 
     return accumulated_agg_value
 
@@ -310,35 +310,44 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
             gt = raster_file.transform # Get all the raster properties on a list.
             pixel_size = gt[0] # X size is stored in position 0, Y size is stored in position 4.
 
-            for row_index, row in region_polygons.iterrows(): # gdf.loc[0:1].iterrows():
-                # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
+            error_countries_id = [] # Create a list for all encountered possible errors
+            for row_index, row in region_polygons[region_polygons['OBJECTID'].isin([88.0, 91.0, 95.0, 98.0, 172.0, 212.0, 218.0, 239.0])].iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
+                try:
+                    # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 
-                geo_row = gpd.GeoSeries(row['geometry']) # This is the country's polygon geometry.
+                    geo_row = gpd.GeoSeries(row['geometry']) # This is the country's polygon geometry.
 
-                # Masks the raster over the current country. The masking requires two outputs:
-                # out_image: the array of the masked image. [z, y, x]
-                # out_transform: the Affine containing the transformation matrix with lat / long values, resolution...
-                out_image, out_transform = rasterio.mask.mask(raster_file, geo_row, crop=True)
+                    # Masks the raster over the current country. The masking requires two outputs:
+                    # out_image: the array of the masked image. [z, y, x]
+                    # out_transform: the Affine containing the transformation matrix with lat / long values, resolution...
+                    out_image, out_transform = rasterio.mask.mask(raster_file, geo_row, crop=True)
 
-                # Obtain the number of tiles in both directions.
-                height = out_image.shape[1]
-                width  = out_image.shape[2]
+                    # Obtain the number of tiles in both directions.
+                    height = out_image.shape[1]
+                    width  = out_image.shape[2]
 
-                # Split the masked raster if it is too large to avoid memory
-                # errors. Else process the entire region.
-                if out_image.nbytes > (3* 10**9):
-                    print("Country {} exceeds 3Gb of memory, splitting the array in tiles of 1000x1000. Current size is GB: {} .".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
-                    aggregated_value = split_and_aggregate(out_image, out_transform, pixel_size, width, height)
+                    # Split the masked raster if it is too large to avoid memory
+                    # errors. Else process the entire region.
+                    if out_image.nbytes > (3* 10**9):
+                        print("Country {} exceeds 3Gb of memory, splitting the array in tiles of 1000x1000. Current size is GB: {} .".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
+                        aggregated_value = split_and_aggregate(out_image, out_transform, pixel_size, width, height)
 
-                else:
-                    aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
+                    else:
+                        aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
+
+                except Exception as e:
+                    # In case there is an error on the process, a value of -9999.0 will be appended
+                    print("the country {} with index {} has errors: {}".format(row["ADM0_NAME"], row["OBJECTID"], e) )
+                    error_countries_id.append(row["OBJECTID"])
+                    aggregated_value = -9999.0 
 
                 # Add the aggregated stock to the list.
                 aggregated_value_list.append(aggregated_value)
 
-                print("Country {} finished.".format(row["ADM0_NAME"]))
+                print("the country {} with index {} is finished with total carbon of: {}".format(row["ADM0_NAME"], row["OBJECTID"], aggregated_value))
 
         print("Finished calculating year {}.".format(file_year))
+        print("countries id with error: ", error_countries_id)
 
         # Transform the list to a DataFrame using the year as header.
         aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year])
