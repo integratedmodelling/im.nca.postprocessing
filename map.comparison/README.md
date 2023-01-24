@@ -5,4 +5,5 @@
 - Similarity in variance
 - Similarity in pattern
 - Overall similarity (weighted geometric mean of the 3 metrics above)
+
 as well as the average value of each similarity index as metrics of global similarity.
