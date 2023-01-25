@@ -22,8 +22,8 @@ import pandas as pd
 
 # Paths to the two rasters to compare 
 
-raster1 = ""
-raster2 = ""
+raster1 = "/home/dibepa/git/global-above-ground-biomass-ml/agb_predicted.tif"
+raster2 = "/home/dibepa/git/global-above-ground-biomass-ml/agb_predicted.tif"
 
 # Window size
 
@@ -150,21 +150,21 @@ def window_reflection(raster,row,col,d_height,d_width,side_length):
     l = np.floor(side_length*0.5)
 
     # Number of rows and columns to reflect.
-    drows = np.max(l - d_height,0)
-    dcols = np.max(l - d_width,0) 
+    drows = int(np.max([l - d_height,0]))
+    dcols = int(np.max([l - d_width,0]) )
 
     # Height and width of the preliminary window to create before completing it with a reflection.
     height = side_length - drows
-    width = side_length - dcols
+    width = side_length - dcols    
     
     # Row and column origins of the preliminary window. The only special case to be treated is when
     # the central pixel is close to the left or top boundary.
-    row_origin = np.max( row - l, 0 )
-    col_origin = np.max( col - l, 0 )
+    row_origin = int(np.max( [row - l, 0] ))
+    col_origin = int(np.max( [col - l, 0] ))
     
     # Create the preliminary window given its origin and shape.
-    window = create_window(raster,col_origin,row_origin,height,width)    
-    
+    window = create_window(raster,col_origin,row_origin,width,height)    
+
     # The preliminary window must be rotated to ensure that it can be treated as a window at the 
     # bottom boundary. The number of 90 degree clockwise rotations to perform depends on the real
     # boundary. Horizaontal and vertical boundaries are treated separately.     
@@ -191,14 +191,14 @@ def window_reflection(raster,row,col,d_height,d_width,side_length):
     # Rotate the window.
     wrot = np.rot90(window,k = krow)
     # Take last drows and put them at the beginning.
-    reflection = np.append((wrot,wrot[:drows,:],))
+    reflection = np.append(wrot,wrot[:drows,:],axis=0)
     # Rotate back.
     window = np.rot90(reflection,k = 4-krow)
 
     # Rotate the window.
     wrot = np.rot90(window,k = kcol)
-    # Take last drows and put them at the beginning
-    reflection = np.append((wrot,wrot[:dcols,:],))
+    # Take last dcols and put them at the beginning
+    reflection = np.append(wrot,wrot[:dcols,:],axis=0)
     # Rotate back
     window = np.rot90(reflection,k = 4-kcol)
   
@@ -211,7 +211,7 @@ def distance_to_border(size,pos):
     :param pos: the row or column index.
     :return: the distance to the closest boundary.
     """
-    return np.min(pos,size-pos)
+    return np.min([pos,size-pos-1])
 
 def create_window(raster,col,row,width,height):
     """
@@ -224,7 +224,7 @@ def create_window(raster,col,row,width,height):
     """
     return raster.read(1, window=Window(col,row,width,height))
     
-def weights(side_length):
+def create_weights_window(side_length):
     """
     Creates an array of weights for the window statistics calculation. The array
     has the shape of the window and the weights have gaussian density. Standard
@@ -312,7 +312,7 @@ def map_index(raster1,raster2,side_length,index):
     """
 
     # Weights are the same for every window.
-    weights = weights(side_length)
+    weights = create_weights_window(side_length)
 
     # Half of the window's side_length: used to determine whether a pixel is close to a boundary.
     l = np.floor(side_length*0.5)
@@ -339,8 +339,8 @@ def map_index(raster1,raster2,side_length,index):
 
                     # If the pixel is close to a boundary then use the reflection method to generate the window. 
                     if (drow < l) or (dcol < l):
-                        window1 = window_reflection(raster1,row,col,drow,dcol,side_length)
-                        window2 = window_reflection(raster2,row,col,drow,dcol,side_length)
+                        window1 = window_reflection(src1,row,col,drow,dcol,side_length)
+                        window2 = window_reflection(src2,row,col,drow,dcol,side_length)
                     # Else just create a window.    
                     else: 
                         window1 = create_window(src1,col-l,row-l,side_length,side_length)
@@ -395,6 +395,7 @@ def map_ssim(sim,siv,sip,alpha,beta,gamma):
     :param gamma: SIP weigth. 
     :return: a numpy array with the overall structural similarity. 
     """
+
     # The overall structural similarity is a weighted mean of the other indices. 
     return np.power(sim,alpha)*np.power(siv,beta)*np.power(sip,gamma)
    
@@ -410,6 +411,7 @@ def export_raster(map, raster_path, filename):
     :filename: the exported raster's path.
     :return: None.
     """
+    
     with rasterio.Env():
 
         # Write an array as a raster band to a new 8-bit file. For
