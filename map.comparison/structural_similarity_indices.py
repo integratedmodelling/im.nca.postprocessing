@@ -1,14 +1,33 @@
 """
-Comparison of two maps through the Structural Similarity Index (SSIM) described in 
-Jones et al. 2016 "Novel application of a quantitative spatial comparison tool to 
-species distribution data". 
+Comparison of two raster maps through the Structural Similarity (SSIM) indices described 
+in Jones et al. 2016 "Novel application of a quantitative spatial comparison tool to 
+species distribution data" (https://www.sciencedirect.com/science/article/pii/S1470160X16302990).
 
-Production of new maps with: 
-- map of differences in mean value.
-- map on differences in variance. 
-- map of covariance structure. 
-- map of general similarity index
-- global similarity index in function of size of the moving window..
+Map similarity is quantified by comparing moving window's statistics of the two maps. The 
+method produces local measures of similarity for each pixel, thus allowing spatially-explicit 
+comparison between maps. Global metrics of similarity are obtained by averaging over the local
+ones.
+
+The script produces 4 comparison maps depicting: 
+- Similarity in mean
+- Similarity in variance 
+- Similarity in pattern
+- Overall structural similarity (weighted geometric mean of the 3 metrics above)
+and also a CSV file with the global similarity indices.
+
+Script inputs are: 
+- Path to both rasters to compare
+- Window size for local statistics calculation
+- Weights of similarities in mean, variance and pattern for structural similarity calculation
+- Filename suffix for the maps and CSV files to be produced.
+
+The script has the following structure: 
+1- Specification of script inputs.
+2- Functions' declaration.
+3- Calculation of the similarity.
+
+Date: 05/12/2022
+Author: Diego Bengochea Paz.
 """
 
 import rasterio
@@ -430,26 +449,36 @@ def export_raster(map, raster_path, filename):
 
 # End of function's declaration.
 
-##
+###
 # Structural similarity calculation. 
-##
+###
 
+print("Starting structural similarity calculation.")
+print("Calculating similarity in mean.")
 sim = map_sim(raster1,raster2,window_size)
 sim_mean = np.mean(sim)
+print("Exporting raster.")
 export_raster(sim,raster1,"sim_"+filename_suffix)
 
+print("Calculating similarity in variance.")
 siv = map_siv(raster1,raster2,window_size)
 siv_mean = np.mean(siv)
+print("Exporting raster.")
 export_raster(siv,raster1,"siv_"+filename_suffix)
 
+print("Calculating similarity in pattern.")
 sip = map_sip(raster1,raster2,window_size)
 sip_mean = np.mean(sip)
+print("Exporting raster.")
 export_raster(sip,raster1,"sip_"+filename_suffix)
 
+print("Calculating overall similarity.")
 ssim = map_ssim(sim,siv,sip,alpha,beta,gamma)
 ssim_mean = np.mean(ssim)
+print("Exporting raster.")
 export_raster(ssim,raster1,"ssim_"+filename_suffix)
 
+print("Exporting global indices.")
 # The global means of each index are exported to a csv file.
 pd.DataFrame(np.array([sim_mean,siv_mean,sip_mean,ssim_mean]), columns = ['SIM','SIV','SIP','SSIM']).to_csv("ssim_summary_"+filename_suffix)
 
