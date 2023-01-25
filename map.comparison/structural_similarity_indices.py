@@ -26,7 +26,7 @@ The script has the following structure:
 2- Functions' declaration.
 3- Calculation of the similarity.
 
-Date: 05/12/2022
+Date: 20/01/2023
 Author: Diego Bengochea Paz.
 """
 
