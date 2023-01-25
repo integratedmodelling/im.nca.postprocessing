@@ -480,6 +480,6 @@ export_raster(ssim,raster1,"ssim_"+filename_suffix)
 
 print("Exporting global indices.")
 # The global means of each index are exported to a csv file.
-pd.DataFrame(np.array([sim_mean,siv_mean,sip_mean,ssim_mean]), columns = ['SIM','SIV','SIP','SSIM']).to_csv("ssim_summary_"+filename_suffix)
+pd.DataFrame(np.array([[sim_mean,siv_mean,sip_mean,ssim_mean]]), columns = ['SIM','SIV','SIP','SSIM']).to_csv("ssim_summary_"+filename_suffix)
 
             
