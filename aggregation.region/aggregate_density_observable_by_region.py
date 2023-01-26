@@ -311,7 +311,7 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
             pixel_size = gt[0] # X size is stored in position 0, Y size is stored in position 4.
 
             error_countries_id = [] # Create a list for all encountered possible errors
-            for row_index, row in region_polygons[region_polygons['OBJECTID'].isin([88.0, 91.0, 95.0, 98.0, 172.0, 212.0, 218.0, 239.0])].iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
+            for row_index, row in region_polygons.iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
                 try:
                     # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 

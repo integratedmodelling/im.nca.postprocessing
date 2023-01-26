@@ -1,0 +1,24 @@
+VALUE,LABEL
+0,No_Data
+10,Cropland_rainfed
+20,Cropland_irrigated_or_post_flooding
+30,Mosaic_cropland
+40,Mosaic_natural_vegetation
+50,Tree cover_broadleaved_evergreen
+60,Tree cover_broadleaved_deciduous
+70,Tree cover_needleleaved_evergreen
+80,Tree cover_needleleaved_deciduous
+90,Tree cover_mixed_leaf_type
+100,Mosaic_tree_and_shrub-herbaceous cover
+110,Mosaic_herbaceous_cover-tree_and_shrub
+120,Shrubland
+130,Grassland
+140,Lichens_and_mosses
+150,Sparse_vegetation
+160,Tree_cover_flooded_fresh_or_brakish_water
+170,Tree_cover_flooded_saline_water
+180,Shrub_or_herbaceous_cover_flooded_fresh-saline-brakish_water
+190,Urban_areas
+200,Bare_areas
+210,Waterbodies
+220,Permanent_snow_and_ice
