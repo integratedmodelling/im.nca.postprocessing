@@ -44,6 +44,7 @@ import numpy as np
 import pandas as pd
 import math
 import platform
+import re
 
 ###############################################################################
 # Specify variables for the current aggregation process.
@@ -55,11 +56,13 @@ import platform
 # Note that the raster filenames must have the following structure:
 # vcs_YYYY_global_300m.tif.
 # TODO: This will be changed in the future for generality.
-raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata"
+# raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_global"
+raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_global"
 
 # Path to the shapefile containing the data on region polygons that are to be
 # used in the aggregation.
-region_polygons_file = r"\\akif.internal\public\z_resources\im-wb\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+# region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 
 # Name of the observable to aggregate. This will be used as a prefix for the
 # temporary results filenames. A suffix "_YYYY.csv" will be appended to this
@@ -105,7 +108,7 @@ def get_raster_data(path):
         # Iterate over all the files in the specified directory.
         if ".tif" in file:
             # Process the file if it has a .tif format.
-            if platform.system() is "Windows":
+            if platform.system() == "Windows":
                 address = os.path.join(path, file).replace("/","\\")
             else:
                 address = os.path.join(path, file).replace("\\","/")
@@ -295,10 +298,16 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
 
     for file in raster_files_list[:]: # [10:]
         # Iterate over all the raster files' addresses and extract the year from the address.
-        filename_length = 24 # This is the number of characters in the raster file name if the convention "vcs_YYYY_global_300m.tif" is followed.
-        start = len(file) - filename_length
-        year_string_start = file.find("vcs_",start)
-        file_year = str( file[ year_string_start + 4 : year_string_start + 8] )
+        # filename_length = 24 # This is the number of characters in the raster file name if the convention "vcs_YYYY_global_300m.tif" is followed.
+        # start = len(file) - filename_length
+        # year_string_start = file.find("vcs_",start)
+        # file_year = str( file[ year_string_start + 4 : year_string_start + 8] )
+        #alternative
+        file_year = re.findall(r'\d+', file)[0]
+        try:
+           landcover_class = re.findall(r'\d+', file)[2]
+        except:
+            landcover_class = False
 
         print("Processing file {} corresponding to year {}.".format(file, file_year))
 
@@ -350,7 +359,10 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
         print("countries id with error: ", error_countries_id)
 
         # Transform the list to a DataFrame using the year as header.
-        aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year])
+        if landcover_class is True:
+            aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year + "_" + landcover_class])
+        else:
+            aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year])
 
         # Merge this year's results with the final, multi-year DataFrame.
         aggregated_df = pd.merge(aggregated_df, aggregated_observable, how='outer', left_index = True, right_index=True)
@@ -367,19 +379,19 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
 ###############################################################################
 # Begin the aggregation process.
 ###############################################################################
+if __name__ == "__main__":
+    print("Loading data.")
+    raster_list = get_raster_data(raster_directory)
+    region_polygons = load_region_polygons(region_polygons_file)
+    print("Data loaded succesfully.")
 
-print("Loading data.")
-raster_list = get_raster_data(raster_directory)
-region_polygons = load_region_polygons(region_polygons_file)
-print("Data loaded succesfully.")
+    # Full path for temporary exports.
+    temp_export_path = temp_export_dir + observable_name
 
-# Full path for temporary exports.
-temp_export_path = temp_export_dir + observable_name
+    print("Starting aggregation process.")
+    aggregated_observable = aggregate_density_observable(raster_list, region_polygons, temp_export_path)
+    print("Aggregation finished.")
 
-print("Starting aggregation process.")
-aggregated_observable = aggregate_density_observable(raster_list, region_polygons, temp_export_path)
-print("Aggregation finished.")
-
-print("Exporting the aggregated dataset.")
-export_to_csv(region_polygons, aggregated_observable, export_path)
-print("Done.")
+    print("Exporting the aggregated dataset.")
+    export_to_csv(region_polygons, aggregated_observable, export_path)
+    print("Done.")
