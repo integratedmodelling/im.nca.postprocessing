@@ -45,6 +45,7 @@ import pandas as pd
 import math
 import platform
 import re
+from multiprocessing import Pool
 
 ###############################################################################
 # Specify variables for the current aggregation process.
@@ -277,6 +278,47 @@ def aggregate_one_region(out_image, out_transform, pixel_size, width_0, height_0
 
     return aggregated_value
 
+def extract_sublist(raster_files_list, value, position):
+    """
+    extract_sublist extracts a sublist filtering the main one according to the int value we
+    want to filter from and its corresponding possition on the string values.
+    :raster_files_list: a list containing the raster files of a directory
+    :value_possition: the possition of the value on the string
+    :position:
+    """
+    sublist_raster_files = []
+    for item in raster_files_list:
+        # if the value and the corresponding possition value of the list are equal, the path is appended
+        if value == int(re.findall(r'\d+', item)[position]):
+            sublist_raster_files.append(item)
+        else:
+            continue
+        
+    return sublist_raster_files
+
+def parallel_argument_list(year_list, raster_files_list, region_polygons, temp_export_path):
+    """
+    parallel_argument_list creates a list containing different tupples from different input parameters
+    :param year_list: the list of years to operate
+    :param raster_files_list: a list containing the raster files of a directory
+    :param region_polygons: a GeoDataFrame storing the polygons corresponding to
+    each region used for the aggregation.
+    :param temp_export_path: path to export the temporary results.
+    :return: a DataFrame storing the aggregated vegetation carbon stocks at the
+    region level for each year.
+    
+    """
+    argument_list = []
+    
+    for year in year_list:
+        list_year = extract_sublist(raster_files_list, year, 0)
+        # we create a tuple
+        argument_year = (list_year, region_polygons, temp_export_path)
+        # append the tuple to the list
+        argument_list.append(argument_year)
+        
+    return argument_list
+
 def aggregate_density_observable(raster_files_list, region_polygons, temp_export_path):
     """
     aggregate_density_observable aggregates the density observable for all the
@@ -298,11 +340,6 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
 
     for file in raster_files_list[:]: # [10:]
         # Iterate over all the raster files' addresses and extract the year from the address.
-        # filename_length = 24 # This is the number of characters in the raster file name if the convention "vcs_YYYY_global_300m.tif" is followed.
-        # start = len(file) - filename_length
-        # year_string_start = file.find("vcs_",start)
-        # file_year = str( file[ year_string_start + 4 : year_string_start + 8] )
-        #alternative
         file_year = re.findall(r'\d+', file)[0]
         try:
            landcover_class = re.findall(r'\d+', file)[2]
@@ -361,14 +398,16 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
         # Transform the list to a DataFrame using the year as header.
         if landcover_class is True:
             aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year + "_" + landcover_class])
+            # Export the temporary results from curent year.
+            aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + "_" + str(landcover_class) + ".csv")
         else:
             aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year])
+            aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + ".csv")
 
         # Merge this year's results with the final, multi-year DataFrame.
         aggregated_df = pd.merge(aggregated_df, aggregated_observable, how='outer', left_index = True, right_index=True)
 
-        # Export the temporary results from curent year.
-        aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + ".csv")
+    aggregated_df.to_csv(temp_export_path + "_total_" + str(file_year) + ".csv")
 
     return aggregated_df
 
@@ -384,14 +423,22 @@ if __name__ == "__main__":
     raster_list = get_raster_data(raster_directory)
     region_polygons = load_region_polygons(region_polygons_file)
     print("Data loaded succesfully.")
-
+    
     # Full path for temporary exports.
     temp_export_path = temp_export_dir + observable_name
-
+    
     print("Starting aggregation process.")
-    aggregated_observable = aggregate_density_observable(raster_list, region_polygons, temp_export_path)
+    #list of years to compute
+    year_list = range(2000,2020)
+    argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
+    with Pool as pool:
+        result = pool.map(aggregate_density_observable,argument_list)
+        print(result)
+        
     print("Aggregation finished.")
+    # aggregated_observable = aggregate_density_observable(raster_list, region_polygons, temp_export_path)
+
 
     print("Exporting the aggregated dataset.")
-    export_to_csv(region_polygons, aggregated_observable, export_path)
+    # export_to_csv(region_polygons, result, export_path)
     print("Done.")
