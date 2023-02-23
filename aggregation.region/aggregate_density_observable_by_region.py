@@ -357,7 +357,7 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
             pixel_size = gt[0] # X size is stored in position 0, Y size is stored in position 4.
 
             error_countries_id = [] # Create a list for all encountered possible errors
-            for row_index, row in region_polygons.iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
+            for row_index, row in region_polygons.loc[0:4].iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
                 try:
                     # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 
@@ -429,7 +429,7 @@ if __name__ == "__main__":
     
     print("Starting aggregation process.")
     #list of years to compute
-    year_list = range(2000,2020)
+    year_list = range(2000,2004)
     argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
     with Pool as pool:
         result = pool.map(aggregate_density_observable,argument_list)
