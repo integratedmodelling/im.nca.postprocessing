@@ -41,12 +41,12 @@ import pandas as pd
 
 # Paths to the two rasters to compare 
 
-raster1 = "/home/dibepa/git/global-above-ground-biomass-ml/agb_predicted.tif"
-raster2 = "/home/dibepa/git/global-above-ground-biomass-ml/agb_predicted.tif"
+raster1 = "/home/dibepa/git/global-above-ground-biomass-ml/agb_predicted_realval.tif"
+raster2 = "/home/dibepa/git/global-above-ground-biomass-ml/global_forest_watch_10km/resampled_5m_10km_global_adjusted_manual.tif"
 
 # Window size
 
-window_size = 5
+window_size = 11
 
 # Weights for the SSIM
 alpha = 1
@@ -54,7 +54,8 @@ beta = 1
 gamma = 1
 
 # Filenames 
-filename_suffix = "vcs_aries_gfw"
+filename_suffix = "agbd_globalml_gfw_wsize_"+str(window_size)
+# filename_suffix = "agbd_globalml_gfw"
 
 # Begin of function's declaration.
 
@@ -86,7 +87,7 @@ def similarity_in_variance(var1,var2,val_range):
     k2 = 0.03
     c2 = np.power(k2*val_range,2)
 
-    return (2*np.sqrt(var1)*np.sqrt(var2)+c2)/(var1**2+var2**2+c2) 
+    return (2*np.sqrt(var1)*np.sqrt(var2)+c2)/(var1+var2+c2) 
 
 
 def similarity_in_pattern(var1,var2,cov,val_range):
@@ -125,7 +126,7 @@ def window_variance(array, mean, weights):
     :return: the weighted variance of the window.
     """
 
-    diff = array - mean
+    diff = (array - mean)#/mean # re-scaled to the mean to allow comparisons between maps with values at different scales
     return np.sum( weights * np.power(diff,2) )
 
 def window_covariance(array1,array2,mean1,mean2,weights): 
