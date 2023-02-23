@@ -357,7 +357,7 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
             pixel_size = gt[0] # X size is stored in position 0, Y size is stored in position 4.
 
             error_countries_id = [] # Create a list for all encountered possible errors
-            for row_index, row in region_polygons.loc[0:4].iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
+            for row_index, row in region_polygons.iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
                 try:
                     # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 
@@ -396,13 +396,14 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
         print("countries id with error: ", error_countries_id)
 
         # Transform the list to a DataFrame using the year as header.
-        if landcover_class is True:
-            aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year + "_" + landcover_class])
-            # Export the temporary results from curent year.
-            aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + "_" + str(landcover_class) + ".csv")
-        else:
+        if not landcover_class:
             aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year])
+            # Export the temporary results from curent year.
             aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + ".csv")
+        else:
+            aggregated_observable = pd.DataFrame(aggregated_value_list, columns = [file_year + "_" + landcover_class])
+            aggregated_observable.to_csv(temp_export_path + "_" + str(file_year) + "_" + str(landcover_class) + ".csv")
+            
 
         # Merge this year's results with the final, multi-year DataFrame.
         aggregated_df = pd.merge(aggregated_df, aggregated_observable, how='outer', left_index = True, right_index=True)
