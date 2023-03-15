@@ -284,7 +284,8 @@ def extract_sublist(raster_files_list, value, position):
     want to filter from and its corresponding possition on the string values.
     :raster_files_list: a list containing the raster files of a directory
     :value_possition: the possition of the value on the string
-    :position:
+    :position: possition of the int value in relation to all in the string
+    :return: a filtered list
     """
     sublist_raster_files = []
     for item in raster_files_list:

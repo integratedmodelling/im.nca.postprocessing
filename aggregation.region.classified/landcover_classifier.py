@@ -14,13 +14,21 @@ import gdal_calc
 
 
 """Data inputs"""
+###############################################################################
+# Specify variables for the current aggregation process.
+###############################################################################
+# The path to the directory containing the landcover. # Both Windows and Unix types of path writing
 # landcover_directory = r"\\akif.internal\public\z_resources\im-wb\landcove_layers" #from the VM
 landcover_directory = "Z:\z_resources\im-wb\landcover_layers_copy" #from my computer
 # landcover_directory = r"C:\Users\admin\Downloads\landcover_layers" #in local VM
-landcover_classes_csv = "./tmp/landcover_classes.csv" #this works
 
+# The path to the csv containing the landcover classes
+landcover_classes_csv = "./tmp/landcover_classes.csv"
+
+# The path to the directory containing the raster files with the data on the density observable to aggregate. 
 vegetation_carbon_stock_directory = "Z:\\veg_c_storage_rawdata\\vegetation_carbon_stock_global"
 
+# Path to export the final dataset.
 output_path = "Z:\\veg_c_storage_rawdata"
 
 
@@ -29,6 +37,9 @@ rootdir = os.path.dirname(__file__)
 landcover_directory = r"\\akif.internal\public\z_resources\im-wb\landcove_layers"
 
 landcover_classes_csv = os.path.join(rootdir, 'im.nca.postprocessing\aggregation.region.classified\tmp')
+
+###############################################################################
+###############################################################################
 
 def check_os_path(path):
     """
@@ -66,7 +77,7 @@ def get_raster_data(path):
             pass
     
     return file_list
-# WARNING: both layers must have the same ammount of files corresponding to the same years
+# WARNING: both layers must have the same ammount of files corresponding to the same years since we are iterating over them at the same time
 landcover_list = get_raster_data(landcover_directory)
 vcs_list = get_raster_data(vegetation_carbon_stock_directory)
 
@@ -75,7 +86,7 @@ def load_landcover_classes(file):
     load_landcover_classes loads a csv containing a table describing
     the landcover classes.
 
-    :param file: the address of the csv with the landcover classification.
+    :file: the directory of the csv with the landcover classification.
     :return: a DataFrame with the data classification.
     """
     file = check_os_path(file)
@@ -87,10 +98,12 @@ clc_df = pd.read_csv(landcover_classes_csv)
 
 def create_output_directory(path_location, folder_name):
     """
-    Create and go the folder which will contain the outputs
-    This method raise FileExistsError if the directory to be created already exists.
+    create_output_directory creates the output directory if it does not exist already
+    since it will raise a FileExistsError in case it already exists.
+    :path_location: path of the output folder location
+    :folder_name: name of the output folder
+    :return: output path 
     """
-    
     dir = os.path.join(path_location, + folder_name)
     dir = check_os_path(dir)
     if not os.path.exists(dir):
