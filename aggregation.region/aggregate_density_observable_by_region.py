@@ -41,6 +41,7 @@ import geopandas as gpd
 import rasterio
 import rasterio.mask
 import numpy as np
+from shapely.geometry import Polygon
 import pandas as pd
 import math
 import platform
@@ -278,6 +279,25 @@ def aggregate_one_region(out_image, out_transform, pixel_size, width_0, height_0
 
     return aggregated_value
 
+def get_geometry_grid(geodataframe, epsg):
+    xmin, ymin, xmax, ymax = geodataframe.total_bounds
+
+    length = 10
+    wide = 10
+
+    cols = list(np.arange(xmin, xmax + wide, wide))
+    rows = list(np.arange(ymin, ymax + length, length))
+
+    polygons = []
+    for x in cols[:-1]:
+        for y in rows[:-1]:
+            polygons.append(Polygon([(x,y), (x+wide, y), (x+wide, y+length), (x, y+length)]))
+
+    # grid = gpd.GeoSeries({'geometry':MultiPolygon(polygons)})
+    grid = gpd.GeoDataFrame({'geometry':polygons}, crs=epsg)
+    return grid
+
+
 def extract_sublist(raster_files_list, value, position):
     """
     extract_sublist extracts a sublist filtering the main one according to the int value we
@@ -362,6 +382,7 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
                 try:
                     # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 
+                    geodf_row = gpd.GeoDataFrame(geometry=gpd.GeoSeries(row['geometry'])) # This is the country's polygon geometry df.
                     geo_row = gpd.GeoSeries(row['geometry']) # This is the country's polygon geometry.
 
                     # Masks the raster over the current country. The masking requires two outputs:
@@ -377,11 +398,30 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
                     # errors. Else process the entire region.
                     if out_image.nbytes > (3* 10**9):
                         print("Country {} exceeds 3Gb of memory, splitting the array in tiles of 1000x1000. Current size is GB: {} .".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
-                        aggregated_value = split_and_aggregate(out_image, out_transform, pixel_size, width, height)
+                        
+                        #this in one option
+                        # aggregated_value = split_and_aggregate(out_image, out_transform, pixel_size, width, height)
+
+                        # this is the most optimal
+                        out_image = None # Remove it as soon as we know is too big
+                        # create a grid of the territory
+                        grid = get_geometry_grid(geodf_row, "EPSG:4326")
+                        # adjust the grid to the shape of the territory
+                        # this operation requires both gdf
+                        region_grid = grid.overlay(geodf_row, how="intersection").to_crs(epsg='4326')
+                        # iterate over each tile and accumulate the value
+                        aggregated_value = 0
+                        for row_index, tile_row in region_grid.iterrows():
+                            geo_tile_row = gpd.GeoSeries(tile_row['geometry'])
+                            
+                            out_image, out_transform = rasterio.mask.mask(raster_file, geo_tile_row, crop=True)
+
+                            aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
+                            aggregated_value += aggregated_value #here we accumulate the value
 
                     else:
                         aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
-
+                                        
                 except Exception as e:
                     # In case there is an error on the process, a value of -9999.0 will be appended
                     print("the country {} with index {} has errors: {}".format(row["ADM0_NAME"], row["OBJECTID"], e) )
