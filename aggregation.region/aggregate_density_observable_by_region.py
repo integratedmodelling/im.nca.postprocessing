@@ -37,6 +37,7 @@ Authors: Rubén Crespo, Diego Bengochea Paz.
 """
 
 import os
+import sys
 import geopandas as gpd
 import rasterio
 import rasterio.mask
@@ -45,6 +46,7 @@ from shapely.geometry import Polygon
 import pandas as pd
 import math
 import platform
+import gc
 import re
 from multiprocessing import Pool
 
@@ -58,13 +60,13 @@ from multiprocessing import Pool
 # Note that the raster filenames must have the following structure:
 # vcs_YYYY_global_300m.tif.
 # TODO: This will be changed in the future for generality.
-# raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_global"
-raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_global"
+raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_global"
+# raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_global"
 
 # Path to the shapefile containing the data on region polygons that are to be
 # used in the aggregation.
-# region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
-region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+# region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 
 # Name of the observable to aggregate. This will be used as a prefix for the
 # temporary results filenames. A suffix "_YYYY.csv" will be appended to this
@@ -73,10 +75,12 @@ observable_name = "vegetation-carbon-stock"
 
 # Path for the temporal exports of the aggregation process after each raster
 # processed.
-temp_export_dir = "./vegetation.carbon.stock/tmp/vcs.aggregated.country/"
+# temp_export_dir = ".\vegetation.carbon.stock\tmp\\"
+temp_export_dir = "C:/Users/admin/Documents/01_Ruben_Scripts/im.nca.postprocessing/aggregation.region/vegetation.carbon.stock/tmp/"
+# temp_export_dir = ".\\vegetation.carbon.stock\tmp"
 
 # Path to export the final dataset.
-export_path = "./vegetation.carbon.stock/vcs-aggregated-country.csv"
+export_path = "./tmp/vcs-aggregated-country-landcover.csv"
 
 ###############################################################################
 ###############################################################################
@@ -262,6 +266,7 @@ def aggregate_one_region(out_image, out_transform, pixel_size, width_0, height_0
     # latitude information.
     ys = rasterio.transform.xy(out_transform, rows, cols)[1] # [0] is xs
     latitudes = np.array(ys) # Cast the list of arrays to a 2D array for computational convenience.
+    ys = cols = rows = None #empty the memory
 
     # Iterate over the latitudes matrix, calculate the area of each tile, and
     # store it in the real_raster_areas array.
@@ -273,26 +278,34 @@ def aggregate_one_region(out_image, out_transform, pixel_size, width_0, height_0
     # Calculate the total value in each tile: density * area = observable value
     # in the area.
     value = real_raster_areas * out_image[0,height_0:height_1,width_0:width_1] #I don't think np.transpose() is necesary
-
+    out_image = None #empty the memory
     # Sum all the carbon stock values in the country treating NaNs as 0.0.
     aggregated_value = np.nansum(value)
 
     return aggregated_value
 
 def get_geometry_grid(geodataframe, epsg):
+    """
+    get_geometry_grid creates a defined grid of the input territory extension.
+    :geodataframe: the territory vector file ina gdf format.
+    :epsg: the defined epsg of vector georeferenced data.
+    :return: the grid as a geodataframe
+    """
+    
+    #get the bounds of the territory
     xmin, ymin, xmax, ymax = geodataframe.total_bounds
-
+    # define the size of the grid
     length = 10
     wide = 10
-
+    # set the cols and rows
     cols = list(np.arange(xmin, xmax + wide, wide))
     rows = list(np.arange(ymin, ymax + length, length))
-
+    # create a list of all the polygons containing the grid.
     polygons = []
     for x in cols[:-1]:
         for y in rows[:-1]:
             polygons.append(Polygon([(x,y), (x+wide, y), (x+wide, y+length), (x, y+length)]))
-
+    # transform the polygon list into a Geoseries or Geodataframe.
     # grid = gpd.GeoSeries({'geometry':MultiPolygon(polygons)})
     grid = gpd.GeoDataFrame({'geometry':polygons}, crs=epsg)
     return grid
@@ -378,60 +391,101 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
             pixel_size = gt[0] # X size is stored in position 0, Y size is stored in position 4.
 
             error_countries_id = [] # Create a list for all encountered possible errors
-            for row_index, row in region_polygons.iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
+            country_counter = 1
+            country_counter_iterator = 1
+            for row_index, row in region_polygons.loc[85:86].iterrows(): # gdf.loc[0:1].iterrows(): / gdf.loc(axis=0)[0:1] / df[df['column'].isin([1,2])]
                 try:
                     # Iterate over the country polygons to progressively calculate the total carbon stock in each one of them.
 
-                    geodf_row = gpd.GeoDataFrame(geometry=gpd.GeoSeries(row['geometry'])) # This is the country's polygon geometry df.
-                    geo_row = gpd.GeoSeries(row['geometry']) # This is the country's polygon geometry.
+                    geodf_row = gpd.GeoDataFrame(geometry=gpd.GeoSeries(row['geometry']), crs=4326) # This is the country's polygon geometry df.
+                    # geo_row = gpd.GeoSeries(row['geometry']) # This is the country's polygon geometry.
+                    """this part is commented to avoid memory excess on raster"""
+                    # # Masks the raster over the current country. The masking requires two outputs:
+                    # # out_image: the array of the masked image. [z, y, x]
+                    # # out_transform: the Affine containing the transformation matrix with lat / long values, resolution...
+                    # out_image, out_transform = rasterio.mask.mask(raster_file, geo_row, crop=True)
 
-                    # Masks the raster over the current country. The masking requires two outputs:
-                    # out_image: the array of the masked image. [z, y, x]
-                    # out_transform: the Affine containing the transformation matrix with lat / long values, resolution...
-                    out_image, out_transform = rasterio.mask.mask(raster_file, geo_row, crop=True)
+                    # # Obtain the number of tiles in both directions.
+                    # height = out_image.shape[1]
+                    # width  = out_image.shape[2]
 
-                    # Obtain the number of tiles in both directions.
-                    height = out_image.shape[1]
-                    width  = out_image.shape[2]
-
-                    # Split the masked raster if it is too large to avoid memory
+                    # Split the region / masked raster if it is too large to avoid memory
                     # errors. Else process the entire region.
-                    if out_image.nbytes > (3* 10**9):
-                        print("Country {} exceeds 3Gb of memory, splitting the array in tiles of 1000x1000. Current size is GB: {} .".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
+                    # if out_image.nbytes > (1* 10**9):
+                    #     print("Country {} exceeds 1Gb of memory, splitting the array in tiles of 1000x1000. Current size is GB: {} .".format(row["ADM0_NAME"], (out_image.nbytes) / np.power(10.0,9)))
                         
-                        #this in one option
+                        # OPTION 1: split the raster
                         # aggregated_value = split_and_aggregate(out_image, out_transform, pixel_size, width, height)
 
-                        # this is the most optimal
-                        out_image = None # Remove it as soon as we know is too big
-                        # create a grid of the territory
-                        grid = get_geometry_grid(geodf_row, "EPSG:4326")
-                        # adjust the grid to the shape of the territory
-                        # this operation requires both gdf
-                        region_grid = grid.overlay(geodf_row, how="intersection").to_crs(epsg='4326')
-                        # iterate over each tile and accumulate the value
-                        aggregated_value = 0
-                        for row_index, tile_row in region_grid.iterrows():
-                            geo_tile_row = gpd.GeoSeries(tile_row['geometry'])
-                            
-                            out_image, out_transform = rasterio.mask.mask(raster_file, geo_tile_row, crop=True)
+                    # OPTION2 : split the region into a grid (this is the most optimal)
+                    # out_image = None # Remove the array as soon as we know it is too big.
 
-                            aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
-                            aggregated_value += aggregated_value #here we accumulate the value
-
-                    else:
+                    
+                    # create a grid of the territory with the coresponding EPSG
+                    grid = get_geometry_grid(geodf_row, "EPSG:4326")
+                    print("grid memory usage {}".format(sys.getsizeof(grid)))
+                    # adjust the grid to the shape of the territory
+                    region_grid = grid.overlay(geodf_row, how="intersection").to_crs(epsg='4326') # this operation requires both inputs to be gdf.
+                    print("region_grid memory usage {}".format(sys.getsizeof(region_grid)))
+                    # region_grid.to_file('region_grid.shp') #for testing
+                    # iterate over each tile and accumulate the value
+                    aggregated_value = 0
+                    total_tiles = int(len(region_grid))
+                    for row_index, tile_row in region_grid.iterrows():
+                        # print a process index.
+                        # print("{} out of {} of country {}".format(row_index + 1, total_tiles, row["ADM0_NAME"]))
+                        geo_tile_row = gpd.GeoSeries(tile_row['geometry'])
+                        # repeat the masking process with the tile.
+                        out_image, out_transform = rasterio.mask.mask(raster_file, geo_tile_row, crop=True)
+                        # print("out_image memory usage {}".format(out_image.nbytes / np.power(10.0,9))) #for testing
+                        # # Obtain the number of tiles in both directions.
+                        height = out_image.shape[1]
+                        width  = out_image.shape[2]
+                        #calculate the aggregated value.
                         aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
-                                        
+                        # print("aggregated value memory usage {}".format(sys.getsizeof(aggregated_value))) #for testing
+                        # accumulate the results.
+                        aggregated_value += aggregated_value 
+                        #clean memory
+                        out_image = None #this works fine
+                        out_transform = None
+
+                        #force cleaning the memory
+                        gc.collect()
+                        
+                    # else:
+                    #     aggregated_value = aggregate_one_region(out_image, out_transform, pixel_size, 0, 0, width, height)
+
+                    # out_image = None
+                    # out_transform = None     
+
                 except Exception as e:
                     # In case there is an error on the process, a value of -9999.0 will be appended
                     print("the country {} with index {} has errors: {}".format(row["ADM0_NAME"], row["OBJECTID"], e) )
                     error_countries_id.append(row["OBJECTID"])
                     aggregated_value = -9999.0 
 
+                
                 # Add the aggregated stock to the list.
                 aggregated_value_list.append(aggregated_value)
 
                 print("the country {} with index {} is finished with total carbon of: {}".format(row["ADM0_NAME"], row["OBJECTID"], aggregated_value))
+                
+                #this part is to create additional temporal results
+                # country_counter += 1
+                # if country_counter_iterator < 26: # + 1
+                #     country_counter_iterator += 1
+                # else:
+                if not landcover_class:
+                    aggregated_observable = pd.DataFrame(row["ADM0_NAME"], aggregated_value, columns = ["country", file_year])
+                    print(aggregated_observable.head())
+                    # Export the temporary results from curent year.
+                    aggregated_observable.to_csv(temp_export_path + "_" + row["ADM0_NAME"] + "_" + str(file_year) + ".csv")
+                else:
+                    aggregated_observable = pd.DataFrame(row["ADM0_NAME"], aggregated_value, columns = ["country", file_year + "_" + landcover_class])
+                    aggregated_observable.to_csv(temp_export_path + "_" + row["ADM0_NAME"] + "_" + str(file_year) + "_" + str(landcover_class) + ".csv")
+
+                    # country_counter_iterator = 1
 
         print("Finished calculating year {}.".format(file_year))
         print("countries id with error: ", error_countries_id)
@@ -471,10 +525,12 @@ if __name__ == "__main__":
     
     print("Starting aggregation process.")
     #list of years to compute
-    year_list = range(2000,2004)
+    year_list = range(2001,2002) #always +1
     argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
-    with Pool as pool:
-        result = pool.map(aggregate_density_observable,argument_list)
+    with Pool(processes=1) as pool:
+        print("Starting Pool.")
+        # result = pool.starmap(aggregate_density_observable,argument_list)
+        result = pool.starmap(aggregate_density_observable,argument_list)
         print(result)
         
     print("Aggregation finished.")

@@ -87,7 +87,7 @@ print("Starting aggregation process.")
 year_list = range(2001,2021) # always + 1
 argument_list = ado.parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
 with Pool() as pool:
-    print("starting Pool")
+    print("Starting Pool.")
     result = pool.starmap(ado.aggregate_density_observable,argument_list)
     print(result)
         
