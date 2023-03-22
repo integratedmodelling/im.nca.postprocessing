@@ -86,9 +86,9 @@ print("Starting aggregation process.")
 #list of years to compute
 year_list = range(2001,2021) # always + 1
 argument_list = ado.parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
-with Pool() as pool:
+with Pool(16) as pool:
     print("Starting Pool.")
-    result = pool.starmap(ado.aggregate_density_observable,argument_list)
+    result = pool.imap_unordered(ado.aggregate_density_observable_parallel_wrapper,argument_list,chunksize=1)
     print(result)
         
         
@@ -96,7 +96,7 @@ with Pool() as pool:
 print("Aggregation finished.")
 
 print("Exporting the aggregated dataset.")
-ado.export_to_csv(region_polygons, aggregated_observable, export_path)
+#ado.export_to_csv(region_polygons, aggregated_observable, export_path)
 
 print("Done.")
 print(raster_list[1:2])
