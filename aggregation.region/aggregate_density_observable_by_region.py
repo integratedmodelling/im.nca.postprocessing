@@ -60,6 +60,7 @@ from multiprocessing import Pool
 # Note that the raster filenames must have the following structure:
 # vcs_YYYY_global_300m.tif.
 # TODO: This will be changed in the future for generality.
+<<<<<<< Updated upstream
 raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_global"
 # raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_global"
 
@@ -67,6 +68,15 @@ raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_car
 # used in the aggregation.
 region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 # region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+=======
+# raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_global"
+raster_directory = "/home/ubuntu/vcs_wb/by_landcover/vegetation_carbon_stock_landcover_global"
+
+# Path to the shapefile containing the data on region polygons that are to be
+# used in the aggregation.
+# region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+region_polygons_file = "/home/ubuntu/vcs_wb/by_landcover/countries_to_test.shp"
+>>>>>>> Stashed changes
 
 # Name of the observable to aggregate. This will be used as a prefix for the
 # temporary results filenames. A suffix "_YYYY.csv" will be appended to this
@@ -525,7 +535,11 @@ if __name__ == "__main__":
     
     print("Starting aggregation process.")
     #list of years to compute
+<<<<<<< Updated upstream
     year_list = range(2001,2002) #always +1
+=======
+    year_list = range(2007,2021)
+>>>>>>> Stashed changes
     argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
     with Pool(processes=1) as pool:
         print("Starting Pool.")
