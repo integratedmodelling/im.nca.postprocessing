@@ -84,12 +84,12 @@ temp_export_path = temp_export_dir + observable_name
 
 print("Starting aggregation process.")
 #list of years to compute
-year_list = range(2001,2021) # always + 1
+year_list = range(2001,2011) # always + 1
 argument_list = ado.parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
 
 from contextlib import closing #this will close the Pool
 
-with closing(Pool(processes= 16)) as pool:
+with closing(Pool(processes= 9)) as pool:
     print("Starting Pool.")
     # result = pool.starmap(ado.aggregate_density_observable,argument_list)
     # result = pool.imap_unordered(ado.aggregate_density_observable_parallel_wrapper,argument_list,chunksize=1)
