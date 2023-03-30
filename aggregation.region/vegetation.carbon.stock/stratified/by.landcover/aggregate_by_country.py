@@ -42,72 +42,69 @@ Authors: Rubén Crespo, Diego Bengochea Paz.
 
 import os
 from multiprocessing import Pool
-
-
 import sys
 
-if __name__ == "__main__":
-# print(sys.executable)
-    sys.path.insert(1, '../aggregation.region') # this works only in the jupyternotebook
-    # from aggregate_density_observable_by_region import get_raster_data
-    import aggregate_density_observable_by_region as ado #
+parallel_cores = 8
 
+if __name__ == "__main__":
+   
+    from processing import aggregate_density_observable, parallel_argument_list
+    from geoio import get_raster_data, load_region_polygons
+    from contextlib import closing 
+
+    # Path to the data of the density observable. 
 
     # raster_directory = "/home/ubuntu/vcs_wb/by_landcover/vegetation_carbon_stock_landcover_global"
     raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
     # raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
 
     # Path to the shapefile containing the data on region polygons that are to be used in the aggregation.
+
     # region_polygons_file = "/home/ubuntu/vcs_wb/by_landcover/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
     region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
     # region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+
 
     # Name of the observable to aggregate. This will be used as a prefix for the
     # temporary results filenames. A suffix "_LCclass_YYYY.csv" will be appended to this
     # name. The directory for the temporary exports is defined below.
     observable_name = "vegetation-carbon-stock"
 
+
     # Path for the temporal exports of the aggregation process after each raster
     # processed.
     # temp_export_dir = "/home/ubuntu/vcs_wb/by_landcover/tmp/"
     temp_export_dir = "./tmp/vcs.aggregated.country/"
+
 
     # Path to export the final dataset.
     # export_path = "/home/ubuntu/vcs_wb/by_landcover/tmp/vcs-aggregated-country.csv"
     export_path = "./vegetation.carbon.stock/vcs-aggregated-country-landcover.csv"
     # export_path = "./tmp/vcs-aggregated-country-landcover.csv"
 
-    raster_list = ado.get_raster_data(raster_directory)
-    region_polygons = ado.load_region_polygons(region_polygons_file)
-    print("Data loaded succesfully.")
-    # time 14s
-
     # Full path for temporary exports per landcover and year.
     temp_export_path = temp_export_dir + observable_name
 
-    print("Starting aggregation process.")
-    #list of years to compute
-    year_list = range(2011,2016) # always + 1
-    argument_list = ado.parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
+    print("Loading data...")
 
-    from contextlib import closing #this will close the Pool
-
-    with closing(Pool(processes= 3)) as pool:
-        print("Starting Pool.")
-        # result = pool.starmap(ado.aggregate_density_observable,argument_list)
-        # result = pool.imap_unordered(ado.aggregate_density_observable_parallel_wrapper,argument_list,chunksize=1)
-
-        result = pool.starmap(ado.aggregate_density_observable,argument_list)
-        print(result)
-            
-
-            
-    # aggregated_observable = ado.aggregate_density_observable(raster_list, region_polygons, temp_export_path)
-    print("Aggregation finished.")
-
-    print("Exporting the aggregated dataset.")
-    #ado.export_to_csv(region_polygons, aggregated_observable, export_path)
-
+    raster_list = get_raster_data(raster_directory)
+    region_polygons = load_region_polygons(region_polygons_file)
+    
     print("Done.")
-    # print(raster_list[1:2])
 
+    # List of years to compute: upper bound is not included in computation. 
+    year_list = range(2011,2016) 
+
+    # Arguments for the aggregation of a density observable.
+    argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
+
+    print("Starting the aggregation process for " + str(len(year_list)) + " years in " + str(parallel_cores) + " parallel cores.")
+    
+    with closing(Pool(processes= parallel_cores)) as pool:
+        print("Distributing computation in the pool of workers.")
+        result = pool.starmap(aggregate_density_observable,argument_list)
+        print("All workers finished.")
+        # print(result)
+            
+    print("Aggregation process finished. Exporting the aggregated dataset.")
+    #ado.export_to_csv(region_polygons, aggregated_observable, export_path)
