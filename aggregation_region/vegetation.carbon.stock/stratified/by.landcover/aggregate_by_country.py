@@ -104,6 +104,8 @@ if __name__ == "__main__":
         print("Distributing computation in the pool of workers.")
         result = pool.starmap(aggregate_density_observable,argument_list)
         print("All workers finished.")
+        pool.close()
+        pool.join()
         # print(result)
             
     print("Aggregation process finished. Exporting the aggregated dataset.")
