@@ -44,7 +44,7 @@ import os
 from multiprocessing import Pool
 import sys
 
-parallel_cores = 8
+parallel_cores = 16
 
 if __name__ == "__main__":
    
@@ -54,14 +54,14 @@ if __name__ == "__main__":
 
     # Path to the data of the density observable. 
 
-    # raster_directory = "/home/ubuntu/vcs_wb/by_landcover/vegetation_carbon_stock_landcover_global"
-    raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
+    raster_directory = "/home/ubuntu/vcs_wb/by_landcover/vegetation_carbon_stock_landcover_global"
+    #raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
     # raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
 
     # Path to the shapefile containing the data on region polygons that are to be used in the aggregation.
 
-    # region_polygons_file = "/home/ubuntu/vcs_wb/by_landcover/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
-    region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+    region_polygons_file = "/home/ubuntu/vcs_wb/by_landcover/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+    # region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
     # region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 
 
@@ -74,12 +74,12 @@ if __name__ == "__main__":
     # Path for the temporal exports of the aggregation process after each raster
     # processed.
     # temp_export_dir = "/home/ubuntu/vcs_wb/by_landcover/tmp/"
-    temp_export_dir = "./tmp/vcs.aggregated.country/"
+    temp_export_dir = "./outputs/tmp/"
 
 
     # Path to export the final dataset.
     # export_path = "/home/ubuntu/vcs_wb/by_landcover/tmp/vcs-aggregated-country.csv"
-    export_path = "./vegetation.carbon.stock/vcs-aggregated-country-landcover.csv"
+    export_path = "./outputs/vcs-aggregated-country-landcover.csv"
     # export_path = "./tmp/vcs-aggregated-country-landcover.csv"
 
     # Full path for temporary exports per landcover and year.
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     print("Done.")
 
     # List of years to compute: upper bound is not included in computation. 
-    year_list = range(2011,2016) 
+    year_list = range(2011,2021) 
 
     # Arguments for the aggregation of a density observable.
     argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)
