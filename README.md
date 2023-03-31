@@ -4,3 +4,5 @@ This repository hosts a series of scripts implementing methods used for post-pro
 ## Contents of the repository
 
 - ***aggregation.region*** contains a _Python_ script implementing a method to aggregate by region the values of rasters describing a density observable (i.e. quantity per unit area).
+
+- ***map.comparison*** contains _Python_ scripts implementing methods for rasters' comparison with spatial statistics.
