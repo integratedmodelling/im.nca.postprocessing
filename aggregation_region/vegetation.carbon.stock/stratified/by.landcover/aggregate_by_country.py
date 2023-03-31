@@ -48,8 +48,8 @@ parallel_cores = 16
 
 if __name__ == "__main__":
    
-    from processing import aggregate_density_observable, parallel_argument_list
-    from geoio import get_raster_data, load_region_polygons
+    from aggregation_region.processing import aggregate_density_observable, parallel_argument_list
+    from aggregation_region.geoio import get_raster_data, load_region_polygons
     from contextlib import closing 
 
     # Path to the data of the density observable. 

@@ -45,7 +45,7 @@ def load_region_polygons(file):
     """
 
     # Build the path according the OS running the script.
-    if platform.system() is "Windows":
+    if platform.system() == "Windows":
         file = file.replace("/","\\")
     else:
         file = file.replace("\\","/")

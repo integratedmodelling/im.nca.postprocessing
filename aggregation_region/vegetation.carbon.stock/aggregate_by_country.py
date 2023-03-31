@@ -36,9 +36,9 @@ Date: 01/11/2022
 Authors: Rubén Crespo, Diego Bengochea Paz.
 """
 
-from geoio import get_raster_data, load_region_polygons
+from aggregation_region.geoio import get_raster_data, load_region_polygons
 from multiprocessing import Pool
-from processing import parallel_argument_list, aggregate_density_observable
+from aggregation_region.processing import parallel_argument_list, aggregate_density_observable
 
 
 # The path to the directory containing the raster files with the data on the
