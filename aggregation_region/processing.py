@@ -223,7 +223,7 @@ def aggregate_density_observable(raster_files_list, region_polygons, temp_export
                 
                 try:
                     # Iterate over the region polygons to progressively calculate the total carbon stock in each one of them. Each region is used to mask the raster with the observable data. Each region is processed in chunks of predefined size to avoid live memory overflow. Assuming the worst case scenario of data type being float64 (8bytes), an array of 10000x10000 weights around 800Mb. PCs RAM must at least equal 800Mb*nCPUSWorking. A larger margin is advisable to avoid killing the process.   
-                    raster_size = (10000,10000)    
+                    raster_size = (100000,100000)    
 
                     # Extracting the country's polygon geometry in a GeoDataFrame.
                     geodf_row = gpd.GeoDataFrame(geometry=gpd.GeoSeries(row['geometry']), crs=4326) 
