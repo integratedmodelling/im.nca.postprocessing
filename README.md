@@ -1,8 +1,8 @@
 # im.nca.postprocessing
-This repository hosts a series of scripts implementing methods used for post-processing NCA-related data produced with ARIES.
+This repository hosts a series of modules with methods for post-processing NCA-related data produced with ARIES. 
 
 ## Contents of the repository
 
-- ***aggregation.region*** contains a _Python_ script implementing a method to aggregate by region the values of rasters describing a density observable (i.e. quantity per unit area).
+- ***aggregation_region*** hosts modules implementing methods to aggregate by region the values of rasters describing a density observable (i.e. quantity per unit area).
 
-- ***map.comparison*** contains _Python_ scripts implementing methods for rasters' comparison with spatial statistics.
+- ***map_comparison*** hosts modules implementing methods for rasters' comparison with multiple spatial statistics. At the moment only the Structural Similarity Index Metric (https://en.wikipedia.org/wiki/Structural_similarity) is available. Disclaimer: software within this directory has not been thoroughly tested and there could be errors. 
