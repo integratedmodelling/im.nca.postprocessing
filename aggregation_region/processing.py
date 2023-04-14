@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import gc
 import re
-from aggregation_region.geoutils import area_of_pixel, get_geometry_grid
+from geoutils import area_of_pixel, get_geometry_grid
 
 
 

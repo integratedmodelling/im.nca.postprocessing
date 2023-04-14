@@ -44,12 +44,12 @@ import os
 from multiprocessing import Pool
 import sys
 
-parallel_cores = 16
+parallel_cores = 4
 
 if __name__ == "__main__":
    
-    from aggregation_region.processing import aggregate_density_observable, parallel_argument_list
-    from aggregation_region.geoio import get_raster_data, load_region_polygons
+    from processing import aggregate_density_observable, parallel_argument_list
+    from geoio import get_raster_data, load_region_polygons
     from contextlib import closing 
 
     # Path to the data of the density observable. 
@@ -74,7 +74,8 @@ if __name__ == "__main__":
     # Path for the temporal exports of the aggregation process after each raster
     # processed.
     # temp_export_dir = "/home/ubuntu/vcs_wb/by_landcover/tmp/"
-    temp_export_dir = "./outputs/tmp/"
+    temp_export_dir = "C:/Users/admin/Documents/01_Ruben_Scripts/im.nca.postprocessing/aggregation_region/vegetation.carbon.stock/tmp/"
+    # temp_export_dir = "./outputs/tmp/"
 
 
     # Path to export the final dataset.
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     print("Done.")
 
     # List of years to compute: upper bound is not included in computation. 
-    year_list = range(2011,2021) 
+    year_list = range(2001,2005) 
 
     # Arguments for the aggregation of a density observable.
     argument_list = parallel_argument_list(year_list, raster_list, region_polygons, temp_export_path)

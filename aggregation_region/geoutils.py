@@ -50,17 +50,20 @@ def get_geometry_grid(geodataframe, epsg, shape):
     # Get the bounds of the territory.
     xmin, ymin, xmax, ymax = geodataframe.total_bounds
 
-    # Get ranges.
-    Deltax = np.abs(xmax - xmin)
-    Deltay = np.abs(ymax - ymin)
+    # # Get ranges.
+    # Deltax = np.abs(xmax - xmin)
+    # Deltay = np.abs(ymax - ymin)
 
-    # Explicit dimensions of a raster within each grid tile.
-    lx = shape[0]
-    ly = shape[1]
+    # # Explicit dimensions of a raster within each grid tile.
+    # lx = shape[0]
+    # ly = shape[1]
 
-    # Grid dimensions.
-    height = np.ceil(Deltax/lx)
-    width = np.ceil(Deltay/ly)
+    # # Grid dimensions.
+    # height = np.ceil(Deltax/lx)
+    # width = np.ceil(Deltay/ly)
+
+    height = 10
+    width = 10
 
     cols = list(np.arange(xmin, xmax + width, width))
     rows = list(np.arange(ymin, ymax + height, height))
