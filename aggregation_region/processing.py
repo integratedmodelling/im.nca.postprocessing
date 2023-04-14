@@ -148,7 +148,7 @@ def aggregate_density_observable_parallel_wrapper(args):
 def process_region_by_chunks(region_grid, raster_file, pixel_size, row):
 
      # Start iteration over each tile and accumulate the observable's value.
-    aggregated_value = 0
+    total_aggregated_value = 0
     total_tiles = int(len(region_grid))
     for row_index, tile_row in region_grid.iterrows():
         
@@ -169,14 +169,14 @@ def process_region_by_chunks(region_grid, raster_file, pixel_size, row):
         # Calculate the aggregated value of the observable within the tile.
         aggregated_value = aggregate_array(out_image, out_transform, pixel_size, 0, 0, width, height)
         
-        aggregated_value += aggregated_value 
+        total_aggregated_value += aggregated_value 
         
         # Clean memory.
         out_image = None 
         out_transform = None
         gc.collect()
 
-    return aggregated_value    
+    return total_aggregated_value    
 
 
 def aggregate_density_observable(raster_files_list, region_polygons, temp_export_path):

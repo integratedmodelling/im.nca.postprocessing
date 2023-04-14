@@ -54,14 +54,14 @@ if __name__ == "__main__":
 
     # Path to the data of the density observable. 
 
-    raster_directory = "/home/ubuntu/vcs_wb/by_landcover/vegetation_carbon_stock_landcover_global"
-    #raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
+    # raster_directory = "/home/ubuntu/vcs_wb/by_landcover/vegetation_carbon_stock_landcover_global"
+    raster_directory = r"\\akif.internal\public\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
     # raster_directory = r"Z:\veg_c_storage_rawdata\vegetation_carbon_stock_landcover_global"
 
     # Path to the shapefile containing the data on region polygons that are to be used in the aggregation.
 
-    region_polygons_file = "/home/ubuntu/vcs_wb/by_landcover/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
-    # region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+    # region_polygons_file = "/home/ubuntu/vcs_wb/by_landcover/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+    region_polygons_file = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
     # region_polygons_file = r"Z:\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 
 
