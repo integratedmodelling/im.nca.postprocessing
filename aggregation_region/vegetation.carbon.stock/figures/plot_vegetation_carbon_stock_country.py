@@ -48,7 +48,8 @@ import mapclassify
 vcs_data_directory = "./tmp/vcs.aggregated.country"
 
 # Path to the country polygons.
-country_polygons = "/home/dibepa/git/countrycarbonaggregation/country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+# country_polygons = "/home/dibepa/git/countrycarbonaggregation/country_polygons/2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
+country_polygons = r"\\akif.internal\public\veg_c_storage_rawdata\wb_global_countries\2015_gaul_dataset_mod_2015_gaul_dataset_global_countries_1.shp"
 
 # Initial and final years for the analysis.
 init_year = 2001
