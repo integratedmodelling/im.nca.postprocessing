@@ -1,3 +1,7 @@
+
+The script contained in this repository was used to aggregate the spatially explicit results for Vegetation Carbon Stock 2001-2020 generated with the ARIES platform and made available at [data.integratedmodelling.org](https://data.integratedmodelling.org/dataset/global-vegetation-carbon-stock-2001-2020).  
+Results were used to inform  **The Changing Wealth of Nations 2024 (CWON 2024)** [Chapter 7:](https://www.worldbank.org/en/publication/the-changing-wealth-of-nations) Forests and Agricultural Lands and the related technical report: "Bulckaen, A., Abad Viñas, R., Bengochea Paz, B., Crespo, R., and Villa, F. 2023. Global Estimates of Carbon Stocks in the Vegetation and Soils of Terrestrial Ecosystems. Technical report." cited by The World Bank’s CWON2024. 
+
 # Aggregation of a density observable by region
 
 ## Modules
@@ -25,3 +29,4 @@ The rest of directories are dedicated to specific applications of the aggregatio
 ## Domains of application
 
 - ***Vegetation carbon stock***: the ARIES model, based on state-of-the-art IPCC methodology, produces global carbon stock maps at a resolution of 300 meters for each year between 2001 and 2020. Each raster tile contains information on the vegetation carbon stock per hectare at the location. The analysis takes into account national borders and tile area to aggregate carbon stocks at country level, producing, as a result, a ***dataset on total vegetation carbon stocks per country for the whole world and for the last two decades***. The dataset is stored in CSV format inside ***vegetation.carbon.stock*** directory together with a _Python_ script to produce visualization of the vegetation carbon stock dataset. 
+
