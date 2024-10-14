@@ -1,6 +1,9 @@
 
 The script contained in this repository was used to aggregate the spatially explicit results for Vegetation Carbon Stock 2001-2020 generated with the ARIES platform and made available at [data.integratedmodelling.org](https://data.integratedmodelling.org/dataset/global-vegetation-carbon-stock-2001-2020).  
-Results were used to inform  **The Changing Wealth of Nations 2024 (CWON 2024)** [Chapter 7:](https://www.worldbank.org/en/publication/the-changing-wealth-of-nations) Forests and Agricultural Lands and the related technical report: "Bulckaen, A., Abad Viñas, R., Bengochea Paz, B., Crespo, R., and Villa, F. 2023. Global Estimates of Carbon Stocks in the Vegetation and Soils of Terrestrial Ecosystems. Technical report." cited by The World Bank’s CWON2024. 
+Results were used to inform  **The Changing Wealth of Nations 2024 (CWON 2024)** [Chapter 7:](https://www.worldbank.org/en/publication/the-changing-wealth-of-nations) Forests and Agricultural Lands and the related technical report: 
+Bulckaen, A., Abad Viñas, R., Bengochea Paz, B., Crespo, R., and Villa, F. (2023).
+The Changing Wealth of Nations : Global Estimates of Carbon Stocks in the Vegetation and Soils of Terrestrial Ecosystems - Technical Report (English). Washington, D.C. : World Bank Group. Available at [http://documents.worldbank.org/](http://documents.worldbank.org/curated/en/099101124145035491/P1784461f8378d0b81af171f907bc24a287).
+
 
 # Aggregation of a density observable by region
 
